@@ -11,17 +11,4 @@ public class CommonModule : InteractionModuleBase
 
     [SlashCommand("ping", "Checks the bot connection")]
     public async Task Ping() => await RespondAsync("pong");
-    
-    [MessageCommand("Bookmark")]
-    public async Task Bookmark(IMessage msg)
-    {
-       
-    }
-    
-    [UserCommand("Say Hello")]
-    public async Task SayHello(IUser user)
-    {
-        
-    }
-
 }
