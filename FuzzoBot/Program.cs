@@ -12,6 +12,7 @@ public class Program
         using var services = ConfigureServices(/*configuration*/);
         var client = services.GetRequiredService<DiscordSocketClient>();
         var commands = services.GetRequiredService<InteractionService>();
+        var messageReceivedHandler = services.GetRequiredService<MessageReceivedHandler>();
 
         client.Log += LoggingProvider.Log;
         commands.Log += LoggingProvider.Log;
@@ -36,7 +37,7 @@ public class Program
         await client.StartAsync();
         
 //         client.MessageUpdated += MessageUpdatedHandler.MessageUpdated;
-         client.MessageReceived += MessageReceivedHandler.OnMessageReceived;
+         client.MessageReceived += messageReceivedHandler.OnMessageReceived;
 
         await Task.Delay(Timeout.Infinite);
     }
@@ -65,6 +66,7 @@ public class Program
                     LogLevel = LogSeverity.Info,
                 }))
             .AddSingleton<CommandHandler>()
+            .AddSingleton<MessageReceivedHandler>()
             .BuildServiceProvider();
     }
 
