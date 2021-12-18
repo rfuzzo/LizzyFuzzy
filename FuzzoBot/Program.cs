@@ -23,6 +23,7 @@ public class Program
              //var guild = Environment.GetEnvironmentVariable("DISCORD_GUILD");
              //var guild_id = ulong.Parse(guild);
              ulong guild_id = 532643730730254337;
+             ulong cp77_guild_id = 717692382849663036;
              await commands.RegisterCommandsToGuildAsync(guild_id, true);
 #else
                 await commands.RegisterCommandsGloballyAsync(true);
