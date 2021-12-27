@@ -14,4 +14,9 @@
       <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Remove="Resources\ModTools.json" />
+      <EmbeddedResource Include="Resources\ModTools.json" />
+    </ItemGroup>
+
 </Project>
