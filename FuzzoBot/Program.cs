@@ -25,6 +25,8 @@ public class Program
             
 #if DEBUG
             await commands.RegisterCommandsToGuildAsync(test_guild_id, true);
+            ulong cpc_guild_id = 717692382849663036;
+            await commands.RegisterCommandsToGuildAsync(cpc_guild_id, true);
 #else
             await commands.RegisterCommandsToGuildAsync(test_guild_id, true);
 
