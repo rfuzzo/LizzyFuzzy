@@ -19,14 +19,19 @@ public class Program
         client.Ready += async ( ) =>
         {
             
+            //var guild = Environment.GetEnvironmentVariable("DISCORD_GUILD");
+            //var guild_id = ulong.Parse(guild);
+            ulong test_guild_id = 532643730730254337;
+            
 #if DEBUG
-             //var guild = Environment.GetEnvironmentVariable("DISCORD_GUILD");
-             //var guild_id = ulong.Parse(guild);
-             ulong guild_id = 532643730730254337;
-             //ulong cp77_guild_id = 717692382849663036;
-             await commands.RegisterCommandsToGuildAsync(guild_id, true);
+            await commands.RegisterCommandsToGuildAsync(test_guild_id, true);
 #else
-                await commands.RegisterCommandsGloballyAsync(true);
+            await commands.RegisterCommandsToGuildAsync(test_guild_id, true);
+
+            ulong cpc_guild_id = 717692382849663036;
+            await commands.RegisterCommandsToGuildAsync(cpc_guild_id, true);
+
+            //await commands.RegisterCommandsGloballyAsync(true);
 #endif
             
             Console.WriteLine("Bot is connected!");

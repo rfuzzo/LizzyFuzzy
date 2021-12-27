@@ -1,5 +1,6 @@
 using Discord;
 using Discord.WebSocket;
+using FuzzoBot.Extensions;
 
 namespace FuzzoBot.Handlers;
 
@@ -38,8 +39,19 @@ public class MessageReceivedHandler
         if (message.Source != MessageSource.User) return;
         if (rawMessage.Author.Id == _client.CurrentUser.Id || rawMessage.Author.IsBot) return;
         
-        double p = 0;
         var content = rawMessage.Content;
+        
+        // support custom slash commands
+        if (content[0] == '\\')
+        {
+            var idx = content.IndexOf(' ') + 1;
+            var command = content[1 .. idx];
+            await message.HandleCustomCommand(command, content[idx ..]);
+            return;
+        }
+        
+        double p = 0;
+        
         
         if (string.IsNullOrEmpty(content)) return;
 
