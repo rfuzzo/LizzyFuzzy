@@ -21,9 +21,11 @@ public static class LoggingProvider
                 Console.ForegroundColor = ConsoleColor.DarkGray;
                 break;
         }
-        Console.WriteLine($"{DateTime.Now,-19} [{message.Severity,8}] {message.Source}: {message.Message} {message.Exception}");
+
+        Console.WriteLine(
+            $"{DateTime.Now,-19} [{message.Severity,8}] {message.Source}: {message.Message} {message.Exception}");
         Console.ResetColor();
-        
+
         return Task.CompletedTask;
     }
 }

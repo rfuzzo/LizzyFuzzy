@@ -1,16 +1,11 @@
 // https://raw.githubusercontent.com/discord-net/Discord.Net/dev/samples/04_interactions_framework/CommandHandler.cs
 
-namespace FuzzoBot.Handlers;
-
+using System.Reflection;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
+
+namespace FuzzoBot.Handlers;
 
 public class CommandHandler
 {
@@ -25,7 +20,7 @@ public class CommandHandler
         _services = services;
     }
 
-    public async Task InitializeAsync ( )
+    public async Task InitializeAsync()
     {
         // Add the public modules that inherit InteractionModuleBase<T> to the InteractionService
         await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
@@ -39,10 +34,9 @@ public class CommandHandler
         _commands.ComponentCommandExecuted += ComponentCommandExecuted;
     }
 
-    private Task ComponentCommandExecuted (ComponentCommandInfo arg1, Discord.IInteractionContext arg2, IResult arg3)
+    private Task ComponentCommandExecuted(ComponentCommandInfo arg1, IInteractionContext arg2, IResult arg3)
     {
         if (!arg3.IsSuccess)
-        {
             switch (arg3.Error)
             {
                 case InteractionCommandError.UnmetPrecondition:
@@ -60,18 +54,14 @@ public class CommandHandler
                 case InteractionCommandError.Unsuccessful:
                     // implement
                     break;
-                default:
-                    break;
             }
-        }    
 
         return Task.CompletedTask;
     }
 
-    private Task ContextCommandExecuted (ContextCommandInfo arg1, Discord.IInteractionContext arg2, IResult arg3)
+    private Task ContextCommandExecuted(ContextCommandInfo arg1, IInteractionContext arg2, IResult arg3)
     {
         if (!arg3.IsSuccess)
-        {
             switch (arg3.Error)
             {
                 case InteractionCommandError.UnmetPrecondition:
@@ -89,18 +79,14 @@ public class CommandHandler
                 case InteractionCommandError.Unsuccessful:
                     // implement
                     break;
-                default:
-                    break;
             }
-        }
 
         return Task.CompletedTask;
     }
 
-    private Task SlashCommandExecuted (SlashCommandInfo arg1, Discord.IInteractionContext arg2, IResult arg3)
+    private Task SlashCommandExecuted(SlashCommandInfo arg1, IInteractionContext arg2, IResult arg3)
     {
         if (!arg3.IsSuccess)
-        {
             switch (arg3.Error)
             {
                 case InteractionCommandError.UnmetPrecondition:
@@ -118,15 +104,12 @@ public class CommandHandler
                 case InteractionCommandError.Unsuccessful:
                     // implement
                     break;
-                default:
-                    break;
             }
-        }
 
         return Task.CompletedTask;
     }
 
-    private async Task HandleInteraction (SocketInteraction arg)
+    private async Task HandleInteraction(SocketInteraction arg)
     {
         try
         {
@@ -140,9 +123,8 @@ public class CommandHandler
 
             // If a Slash Command execution fails it is most likely that the original interaction acknowledgement will persist. It is a good idea to delete the original
             // response, or at least let the user know that something went wrong during the command execution.
-            if(arg.Type == InteractionType.ApplicationCommand)
-                await arg.GetOriginalResponseAsync().ContinueWith(async (msg) => await msg.Result.DeleteAsync());
+            if (arg.Type == InteractionType.ApplicationCommand)
+                await arg.GetOriginalResponseAsync().ContinueWith(async msg => await msg.Result.DeleteAsync());
         }
     }
 }
-

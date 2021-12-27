@@ -1,10 +1,8 @@
-using Discord;
-
 namespace FuzzoBot.Models;
 
 public record class ModTool(
     string Title,
-    string Description, 
+    string Description,
     string Url,
     string Color,
     ulong Author,

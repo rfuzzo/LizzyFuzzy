@@ -5,13 +5,8 @@ namespace FuzzoBot.Extensions;
 
 public static class SocketUserMessageExtensions
 {
-    enum CustomCommands
-    {
-        Md
-    }
-    
     /// <summary>
-    /// Handles custom commands typed with \command before a message
+    ///     Handles custom commands typed with \command before a message
     /// </summary>
     /// <param name="message"></param>
     /// <param name="rawCommand"></param>
@@ -29,6 +24,7 @@ public static class SocketUserMessageExtensions
                 default:
                     throw new ArgumentOutOfRangeException();
             }
+
             await message.DeleteAsync();
             return;
         }
@@ -37,7 +33,7 @@ public static class SocketUserMessageExtensions
     }
 
     /// <summary>
-    /// The markdown command converts markdown in to a discord usable markdown syntax 
+    ///     The markdown command converts markdown in to a discord usable markdown syntax
     /// </summary>
     /// <param name="message"></param>
     /// <param name="input"></param>
@@ -46,40 +42,38 @@ public static class SocketUserMessageExtensions
         var embed = new EmbedBuilder
         {
             //Title = "Markdown(1 + to Discord)",
-            Color = Color.Gold,
+            Color = Color.Gold
         };
         embed.AddField("Markdown",
                 MarkdownToDiscord(input))
             .WithAuthor(message.Author)
             .WithCurrentTimestamp();
-        
+
         await message.ReplyAsync(embed: embed.Build());
-        
+
         string MarkdownToDiscord(string input)
         {
             var lines = input.Split(Environment.NewLine);
             var resultLines = new List<string>();
-            for (int i = 0; i < lines.Length; i++)
+            for (var i = 0; i < lines.Length; i++)
             {
                 var line = lines[i];
-            
+
                 if (line.StartsWith("# "))
-                {
                     line = $"**{line}**\n==================";
-                }
                 else if (line.StartsWith("## "))
-                {
                     line = $"**{line}**\n------------------";
-                }
-                else if (line.StartsWith("### "))
-                {
-                    line = $"**{line}**\n";
-                }
-            
+                else if (line.StartsWith("### ")) line = $"**{line}**\n";
+
                 resultLines.Add(line);
             }
-        
+
             return string.Join(Environment.NewLine, resultLines);
         }
+    }
+
+    private enum CustomCommands
+    {
+        Md
     }
 }

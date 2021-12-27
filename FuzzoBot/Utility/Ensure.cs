@@ -1,8 +1,7 @@
-namespace FuzzoBot.Utility;
-
-using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+
+namespace FuzzoBot.Utility;
 
 public static class Ensure
 {
@@ -10,14 +9,14 @@ public static class Ensure
     public static T Null<T>(
         this T obj,
         Action? action = default
-        )
+    )
     {
         action?.Invoke();
         return obj ?? throw new Exception();
     }
 
     /// <summary>
-    /// Ensures an object is not null
+    ///     Ensures an object is not null
     /// </summary>
     /// <param name="obj"></param>
     /// <param name="message"></param>
@@ -30,8 +29,10 @@ public static class Ensure
         [NotNull] this T? obj,
         string? message = default,
         [CallerArgumentExpression("obj")] string? parameterName = default)
-        where T : class =>
-        obj ?? throw new ArgumentNullException(parameterName, message);
+        where T : class
+    {
+        return obj ?? throw new ArgumentNullException(parameterName, message);
+    }
 
     [return: NotNull]
     public static T NotNull<T>(
@@ -39,20 +40,17 @@ public static class Ensure
         Action action,
         string? message = default,
         [CallerArgumentExpression("obj")] string? parameterName = default
-        )
+    )
         where T : class
     {
-        if (obj != null)
-        {
-            return obj;
-        }
+        if (obj != null) return obj;
 
         action();
         throw new ArgumentNullException(parameterName, message);
     }
 
     /// <summary>
-    /// Ensures an string is not null or empty
+    ///     Ensures an string is not null or empty
     /// </summary>
     /// <param name="obj"></param>
     /// <param name="message"></param>
@@ -63,7 +61,9 @@ public static class Ensure
         [NotNull] this string? obj,
         string? message = default,
         [CallerArgumentExpression("obj")] string? parameterName = default)
-        => string.IsNullOrEmpty(obj) ? throw new ArgumentNullException(parameterName, message) : obj;
+    {
+        return string.IsNullOrEmpty(obj) ? throw new ArgumentNullException(parameterName, message) : obj;
+    }
 
     public static bool IsNotNullOrEmpty(string str = "", Action? action = default)
     {
@@ -88,6 +88,4 @@ public static class Ensure
                 return false;
         }
     }
-
 }
-
