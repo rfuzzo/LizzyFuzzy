@@ -77,12 +77,12 @@ public class MessageReceivedHandler
                 p *= 2;
 
         // evaluate other stuff
-        if (content.Contains("diffuse"))
-            await message.ReplyAsync("Unfortunately we still haven't found the defuse textures :cry:",
-                false, null, AllowedMentions.None);
-        else if (content.Contains("leak"))
-            await message.ReplyAsync(_emotes["tos"].ToString(),
-                false, null, AllowedMentions.None);
+        // if (content.Contains("diffuse"))
+        //     await message.ReplyAsync("Unfortunately we still haven't found the defuse textures :cry:",
+        //         false, null, AllowedMentions.None);
+        // else if (content.Contains("leak"))
+        //     await message.ReplyAsync(_emotes["tos"].ToString(),
+        //         false, null, AllowedMentions.None);
 
         var pOut = Math.Round(p * 100, 2);
 
