@@ -10,13 +10,13 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Discord.Net.Labs" Version="3.5.0"/>
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0"/>
+        <PackageReference Include="Discord.Net.Labs" Version="3.6.1" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
     </ItemGroup>
 
     <ItemGroup>
-        <None Remove="Resources\ModTools.json"/>
-        <EmbeddedResource Include="Resources\ModTools.json"/>
+        <None Remove="Resources\ModTools.json" />
+        <EmbeddedResource Include="Resources\ModTools.json" />
     </ItemGroup>
 
 </Project>

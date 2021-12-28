@@ -1,7 +1,9 @@
 ﻿using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
+using FuzzoBot;
 using FuzzoBot.Handlers;
+using FuzzoBot.Modules;
 using Microsoft.Extensions.DependencyInjection;
 
 public class Program
@@ -22,17 +24,11 @@ public class Program
         commands.Log += LoggingProvider.Log;
         client.Ready += async () =>
         {
-            //var guild = Environment.GetEnvironmentVariable("DISCORD_GUILD");
-            //var guild_id = ulong.Parse(guild);
-            ulong test_guild_id = 532643730730254337;
-
 #if DEBUG
-            await commands.RegisterCommandsToGuildAsync(test_guild_id);
+            await commands.RegisterCommandsToGuildAsync(Constants.Guild.test, true);
 #else
-            await commands.RegisterCommandsToGuildAsync(test_guild_id, true);
-
-            ulong cpc_guild_id = 717692382849663036;
-            await commands.RegisterCommandsToGuildAsync(cpc_guild_id, true);
+            await commands.RegisterCommandsToGuildAsync(Constants.Guild.test, true);
+            await commands.RegisterCommandsToGuildAsync(Constants.Guild.moddingCmmmunity, true);
 
             //await commands.RegisterCommandsGloballyAsync(true);
 #endif
@@ -47,6 +43,7 @@ public class Program
 
 //         client.MessageUpdated += MessageUpdatedHandler.MessageUpdated;
         client.MessageReceived += messageReceivedHandler.OnMessageReceived;
+        
 
         await Task.Delay(Timeout.Infinite);
     }
