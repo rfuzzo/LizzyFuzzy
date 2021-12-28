@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FuzzoBot", "FuzzoBot\FuzzoBot.csproj", "{86C96599-2AA6-46D5-9E72-DA48BE9BFF36}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedDatabase", "RedDatabase\RedDatabase.csproj", "{5C63941C-A9A8-460E-A64E-8607B20414C1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{86C96599-2AA6-46D5-9E72-DA48BE9BFF36}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{86C96599-2AA6-46D5-9E72-DA48BE9BFF36}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{86C96599-2AA6-46D5-9E72-DA48BE9BFF36}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5C63941C-A9A8-460E-A64E-8607B20414C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5C63941C-A9A8-460E-A64E-8607B20414C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5C63941C-A9A8-460E-A64E-8607B20414C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5C63941C-A9A8-460E-A64E-8607B20414C1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

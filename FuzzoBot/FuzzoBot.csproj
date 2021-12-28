@@ -19,4 +19,8 @@
         <EmbeddedResource Include="Resources\ModTools.json" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\RedDatabase\RedDatabase.csproj" />
+    </ItemGroup>
+
 </Project>

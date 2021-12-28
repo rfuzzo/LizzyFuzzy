@@ -1,10 +1,14 @@
-﻿using Discord;
+﻿using System.IO.Compression;
+using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using FuzzoBot;
 using FuzzoBot.Handlers;
 using FuzzoBot.Modules;
+using FuzzoBot.Utility;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using RedDatabase.Model;
 
 public class Program
 {
@@ -15,6 +19,15 @@ public class Program
 
     private async Task MainAsync()
     {
+        var zipPath = Path.GetFullPath(Path.Combine("Resources", "red.db.zip"));
+        var extractPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        if (!File.Exists(Path.Combine(extractPath, "red.db")))
+        {
+            Console.WriteLine($"Extracting db to {extractPath} ...");
+            ZipFile.ExtractToDirectory(zipPath, extractPath);
+            Console.WriteLine($"done.");
+        }
+
         using var services = ConfigureServices( /*configuration*/);
         var client = services.GetRequiredService<DiscordSocketClient>();
         var commands = services.GetRequiredService<InteractionService>();
