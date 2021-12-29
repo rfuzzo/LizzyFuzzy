@@ -228,7 +228,20 @@ public class MessageReceivedHandler
                 // Fields
                 if (fields.ChildNodes.First().InnerText == "Fields")
                     foreach (var childNode in fields.ChildNodes.Skip(1))
-                        sb.AppendLine($"{childNode.LastChild.InnerText} {childNode.FirstChild.InnerText}");
+                    {
+                        var first = childNode.FirstChild.InnerText;
+                        var last = childNode.LastChild.InnerText;
+
+                        if (first != last)
+                        {
+                            sb.AppendLine($"{first} {last}");
+                        }
+                        else
+                        {
+                            sb.AppendLine($"{first}");
+                        }
+                    }
+                        
             // Methods
 
             sb.AppendLine("```");
