@@ -71,7 +71,7 @@ public static class SocketUserMessageExtensions
             return string.Join(Environment.NewLine, resultLines);
         }
     }
-
+    
     private enum CustomCommands
     {
         Md

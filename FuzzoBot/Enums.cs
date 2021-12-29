@@ -1,3 +1,4 @@
+// ReSharper disable All
 namespace FuzzoBot;
 
 public enum ModdingTool
@@ -7,6 +8,23 @@ public enum ModdingTool
     Redscript,
     WolvenKit,
     MlsetupBuilder
+}
+
+public enum EVanillaArchives
+{
+    all,
+    audio_1_general,
+    audio_2_soundbanks,
+    basegame_1_engine,
+    basegame_2_mainmenu,
+    basegame_3_nightcity,
+    basegame_3_nightcity_gi,
+    basegame_3_nightcity_terrain,
+    basegame_4_animation,
+    basegame_4_appearance,
+    basegame_4_gamedata,
+    basegame_5_video,
+    memoryresident_1_general
 }
 
 enum DXGI_FORMAT {
