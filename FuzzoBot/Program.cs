@@ -16,7 +16,7 @@ public class Program
     private async Task MainAsync()
     {
         var zipPath = Path.GetFullPath(Path.Combine("Resources", "red.db.zip"));
-        var extractPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        var extractPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         if (!File.Exists(Path.Combine(extractPath, "red.db")))
         {
             Console.WriteLine($"Extracting db to {extractPath} ...");

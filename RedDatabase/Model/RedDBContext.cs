@@ -6,7 +6,7 @@ public class RedDbContext : DbContext
 {
     public RedDbContext()
     {
-        const Environment.SpecialFolder folder = Environment.SpecialFolder.LocalApplicationData;
+        const Environment.SpecialFolder folder = Environment.SpecialFolder.UserProfile;
         var path = Environment.GetFolderPath(folder);
         DbPath = $"{path}{Path.DirectorySeparatorChar}red.db";
     }
