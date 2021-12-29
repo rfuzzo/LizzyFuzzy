@@ -13,7 +13,9 @@ public class Red4Module : InteractionModuleBase
     // ReSharper disable InconsistentNaming
     public enum EHashSubCommands
     {
-        info
+        info,
+        uses,
+        usedby
     }
 
 
@@ -30,37 +32,92 @@ public class Red4Module : InteractionModuleBase
     {
         if (!ulong.TryParse(hash, out var uhash)) await RespondAsync("Not a valid hash");
 
-        await using var db = new RedDbContext();
-
+        RedFile? file;
+        await using (var db = new RedDbContext())
+        {
+            file = await db.Files
+                .FirstOrDefaultAsync(x => x.RedFileId == uhash);
+        }
+        if (file is null)
+        {
+            await RespondAsync("No file with that hash found");
+            return;
+        }
+        
         switch (subCommands)
         {
             case EHashSubCommands.info:
-                var result = await db.Files.FirstOrDefaultAsync(x => x.RedFileId == uhash);
-                if (result is not null)
+            {
+                var embed = new EmbedBuilder()
+                    .WithTitle(file.Name)
+                    .WithColor(Color.Green)
+                    .WithCurrentTimestamp();
+                embed.AddField("Hash", $"```{file.RedFileId.ToString()}```");
+                embed.AddField("Archive", $"```{file.Archive}```");
+                if (file.Uses is not null)
                 {
-                    var embed = new EmbedBuilder()
-                        .WithTitle($"Info {result.RedFileId.ToString()}")
-                        .WithColor(Color.Green)
-                        //.WithDescription(desc)
-                        .WithCurrentTimestamp();
-                    embed.AddField("Name", $"```{result.Name}```");
-                    embed.AddField("Archive", $"```{result.Archive}```");
-                    if (result.Uses is not null)
-                    {
-                        //1024.
-                        var val = string.Join('\n', result.Uses);
-                        if (val.Length > 1010) val = val[..1010];
-                        embed.AddField("Uses", $"```{val}...```");
-                    }
-
-                    await RespondAsync(embed: embed.Build());
+                    var val = string.Join('\n', file.Uses);
+                    embed.AddField("Uses", $"```{val.Clamp(1010)}```");
                 }
-                else
-                {
-                    await RespondAsync("No file with that hash found");
-                }
-
+                await RespondAsync(embed: embed.Build());
                 break;
+            }
+            case EHashSubCommands.uses:
+            {
+                await DeferAsync();
+                
+                var embed = new EmbedBuilder()
+                    .WithTitle(file.Name)
+                    .WithColor(Color.Green)
+                    .WithCurrentTimestamp();
+                if (file.Uses is not null)
+                {
+                    foreach (var use in file.Uses.Take(25))
+                    {
+                        // get file
+                        RedFile? usedFile;
+                        await using (var db = new RedDbContext())
+                        {
+                            usedFile = await db.Files.FirstOrDefaultAsync(x => x.RedFileId == use);
+                        }
+                        if (usedFile is null)
+                        {
+                            continue;
+                        }
+                        embed.AddField(usedFile.Name, $"`{usedFile.RedFileId}`");
+                    }
+                }
+                await Context.Interaction.ModifyOriginalResponseAsync(properties =>
+                {
+                    properties.Embed = embed.Build();
+                    //properties.Components = componentBuilder.Build();
+                });
+                //await RespondAsync(embed: embed.Build());
+                break;
+            }
+            case EHashSubCommands.usedby:
+            {
+                await DeferAsync();
+                
+                var embed = new EmbedBuilder()
+                    .WithTitle(file.Name)
+                    .WithColor(Color.Green)
+                    .WithCurrentTimestamp();
+                
+                var pageResults = await GetDataBaseEntriesPaginated(file.RedFileId, EVanillaArchives.all, 1);
+                if (pageResults.Count == 0) return; 
+                
+                foreach (var usesFile in pageResults.Take(25))
+                    embed.AddField(usesFile.Name, $"hash: `{usesFile.RedFileId.ToString()}`");
+                
+                await Context.Interaction.ModifyOriginalResponseAsync(properties =>
+                {
+                    properties.Embed = embed.Build();
+                    //properties.Components = componentBuilder.Build();
+                });
+                //await RespondAsync(embed: embed.Build());
+                break;
+            }
             default:
                 throw new ArgumentOutOfRangeException(nameof(subCommands), subCommands, null);
         }
@@ -169,23 +226,48 @@ public class Red4Module : InteractionModuleBase
         }
     }
 
-    private static async Task<List<RedFile>> GetDataBaseEntriesPaginated(string contains, EVanillaArchives archive,
+    private static async Task<List<RedFile>> GetDataBaseEntriesPaginated(
+        string contains, 
+        EVanillaArchives archive,
         int page)
     {
-        await using var db = new RedDbContext();
         var archiveName = archive.ToString();
-
-        var result = db.Files
-            .AsAsyncEnumerable()
-            .Where(x => x.Name != null && x.Name.Contains(contains));
-
-        if (archive != EVanillaArchives.all)
-            result = result
-                .Where(x => x.Archive != null && x.Archive.Equals(archiveName));
-
-        return await result
-            .Skip(PageSize * (page - 1))
-            .Take(PageSize)
-            .ToListAsync();
+        var ret = new List<RedFile>();
+        await using (var db = new RedDbContext())
+        {
+            var result = db.Files
+                .Where(x => x.Name != null && x.Name.Contains(contains));
+            if (archive != EVanillaArchives.all)
+                result = result
+                    .Where(x => x.Archive != null && x.Archive.Equals(archiveName));
+            ret = await result
+                .Skip(PageSize * (page - 1))
+                .Take(PageSize)
+                .ToListAsync();
+        }
+        return ret;
+    }
+    
+    private static async Task<List<RedFile>> GetDataBaseEntriesPaginated(
+        ulong parentHash, 
+        EVanillaArchives archive,
+        int page)
+    {
+        var archiveName = archive.ToString();
+        var ret = new List<RedFile>();
+        await using (var db = new RedDbContext())
+        {
+            var result = db.Files
+                .AsAsyncEnumerable()
+                .Where(x => x.Uses != null && x.Uses.Contains(parentHash));
+            if (archive != EVanillaArchives.all)
+                result = result
+                    .Where(x => x.Archive != null && x.Archive.Equals(archiveName));
+            ret = await result
+                .Skip(PageSize * (page - 1))
+                .Take(PageSize)
+                .ToListAsync();
+        }
+        return ret;
     }
 }
