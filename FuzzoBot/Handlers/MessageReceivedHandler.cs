@@ -50,7 +50,7 @@ public class MessageReceivedHandler
 
         var content = rawMessage.Content;
         if (string.IsNullOrEmpty(content)) return;
-        
+
         // support custom slash commands
         if (content[0] == '\\')
         {
@@ -59,35 +59,31 @@ public class MessageReceivedHandler
             await message.HandleCustomCommand(command, content[idx ..]);
             return;
         }
-        
+
         if (await HandleVandalism()) return;
 
         // handle templates
         var links = (await HandleLinks(message.Content)).ToList();
         var classes = (await HandleClasses(message.Content)).ToList();
-        
+
         if (links.Count > 0 || classes.Count > 0)
         {
             var embed = new EmbedBuilder()
                 .WithUrl("https://nativedb.red4ext.com")
-                .WithTitle($"Links:")
+                .WithTitle("Links:")
                 .WithColor(Color.Red)
                 .WithCurrentTimestamp();
-            
+
             if (links.Count > 0)
             {
                 var description = string.Join('\n', links);
                 if (description.Length > 4096) description = description[..4096];
                 embed.WithDescription(description);
             }
-            
+
             if (classes.Count > 0)
-            {
                 foreach (var c in classes)
-                {
                     embed.AddField(c.Item1, c.Item2);
-                }
-            }
 
             await message.ReplyAsync(embed: embed.Build(), allowedMentions: AllowedMentions.None);
         }
@@ -100,14 +96,14 @@ public class MessageReceivedHandler
         // else if (content.Contains("leak"))
         //     await message.ReplyAsync(_emotes["tos"].ToString(),
         //         false, null, AllowedMentions.None);
-        
+
         async Task<bool> HandleVandalism()
         {
             double p = 0;
             foreach (var (key, value) in DictSpam)
                 if (content.Contains(key))
                     p += DictSpam[key];
-            
+
             // randomize p for show
             var r = _rand.NextDouble() / 10;
             r *= _rand.NextDouble() < 0.5 ? -1 : 1;
@@ -151,7 +147,7 @@ public class MessageReceivedHandler
         var reading = false;
         var lastChar = '\n';
         var current = "";
-        
+
         var links = new List<string>();
         foreach (var c in content)
         {
@@ -161,44 +157,36 @@ public class MessageReceivedHandler
                 links.Add(current[..^1]);
                 current = "";
             }
-            if (reading)
-            {
-                current += c;
-            }
-            if (c == linkStart && lastChar == linkStart && !reading)
-            {
-                reading = true;
-            }
-            
+
+            if (reading) current += c;
+            if (c == linkStart && lastChar == linkStart && !reading) reading = true;
+
             lastChar = c;
         }
 
         const string root = @"https://nativedb.red4ext.com/";
         using var client = new HttpClient();
-        
+
         var finalLinks = new List<string>();
         foreach (var url in links.Select(link => $"{root}{link}"))
         {
             var response = await client.GetAsync(url);
-            if (response.StatusCode == HttpStatusCode.OK)
-            {
-                finalLinks.Add(url);
-            }
+            if (response.StatusCode == HttpStatusCode.OK) finalLinks.Add(url);
         }
-        
+
         return finalLinks;
     }
-    
+
     /// <summary>
     ///     Handles custom class links in a message
     /// </summary>
     /// <param name="content"></param>
-    private async Task<IEnumerable<(string,string)>> HandleClasses(string content)
+    private async Task<IEnumerable<(string, string)>> HandleClasses(string content)
     {
         // crawl text links
         const char classStart = '{';
         const char classEnd = '}';
-        
+
         var reading = false;
         var lastChar = '\n';
         var current = "";
@@ -213,27 +201,22 @@ public class MessageReceivedHandler
                 classes.Add(current[..^1]);
                 current = "";
             }
-            if (reading)
-            {
-                current += c;
-            }
-            if (c == classStart && lastChar == classStart && !reading)
-            {
-                reading = true;
-            }
-            
+
+            if (reading) current += c;
+            if (c == classStart && lastChar == classStart && !reading) reading = true;
+
             lastChar = c;
         }
 
         const string root = @"https://nativedb.red4ext.com/";
         using var client = new HttpClient();
-        
-        var finalClasses = new List<(string,string)>();
+
+        var finalClasses = new List<(string, string)>();
         foreach (var url in classes.Select(c => $"{root}{c}"))
         {
             var response = await client.GetAsync(url);
             if (response.StatusCode != HttpStatusCode.OK) continue;
-            
+
             var html = response.Content.ReadAsStringAsync().Result;
             var doc = new HtmlDocument();
             doc.LoadHtml(html);
@@ -242,23 +225,17 @@ public class MessageReceivedHandler
             sb.AppendLine("**Fields**");
             sb.AppendLine("```");
             if (fields.ChildNodes.Count > 0)
-            {
                 // Fields
                 if (fields.ChildNodes.First().InnerText == "Fields")
-                {
                     foreach (var childNode in fields.ChildNodes.Skip(1))
-                    {
                         sb.AppendLine($"{childNode.LastChild.InnerText} {childNode.FirstChild.InnerText}");
-                    }
-                }
-                // Methods
-            }
+            // Methods
 
             sb.AppendLine("```");
             var description = sb.ToString();
             finalClasses.Add((url, description));
         }
-        
+
         return finalClasses;
     }
 }

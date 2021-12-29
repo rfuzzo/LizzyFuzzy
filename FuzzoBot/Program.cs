@@ -4,11 +4,7 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using FuzzoBot;
 using FuzzoBot.Handlers;
-using FuzzoBot.Modules;
-using FuzzoBot.Utility;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using RedDatabase.Model;
 
 public class Program
 {
@@ -25,7 +21,7 @@ public class Program
         {
             Console.WriteLine($"Extracting db to {extractPath} ...");
             ZipFile.ExtractToDirectory(zipPath, extractPath);
-            Console.WriteLine($"done.");
+            Console.WriteLine("done.");
         }
 
         using var services = ConfigureServices( /*configuration*/);
@@ -38,7 +34,7 @@ public class Program
         client.Ready += async () =>
         {
 #if DEBUG
-            await commands.RegisterCommandsToGuildAsync(Constants.Guild.test, true);
+            await commands.RegisterCommandsToGuildAsync(Constants.Guild.test);
 #else
             await commands.RegisterCommandsToGuildAsync(Constants.Guild.test, true);
             await commands.RegisterCommandsToGuildAsync(Constants.Guild.moddingCmmmunity, true);
@@ -56,7 +52,7 @@ public class Program
 
 //         client.MessageUpdated += MessageUpdatedHandler.MessageUpdated;
         client.MessageReceived += messageReceivedHandler.OnMessageReceived;
-        
+
 
         await Task.Delay(Timeout.Infinite);
     }
