@@ -8,112 +8,101 @@ using RedDatabase.Model;
 
 namespace FuzzoBot.Modules;
 
+/// <summary>
+/// 
+/// </summary>
 public class Red4Module : InteractionModuleBase
 {
     // ReSharper disable InconsistentNaming
     public enum EHashSubCommands
     {
         info,
-        uses,
         usedby
     }
-
-
     // ReSharper restore InconsistentNaming
+    
     private const int PageSize = 20;
 
     /// <summary>
+    /// 
     /// </summary>
     /// <param name="subCommands"></param>
     /// <param name="hash"></param>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
     [SlashCommand("file", "red4 file info")]
-    public async Task FileCommand(EHashSubCommands subCommands, string hash)
+    public async Task FileCommand(
+        EHashSubCommands subCommands, 
+        string hash,
+        bool ephemeral = true)
     {
         if (!ulong.TryParse(hash, out var uhash)) await RespondAsync("Not a valid hash");
 
         RedFile? file;
         await using (var db = new RedDbContext())
         {
-            file = await db.Files
-                .FirstOrDefaultAsync(x => x.RedFileId == uhash);
+            file = await db.Files.FirstOrDefaultAsync(x => x.RedFileId == uhash);
         }
         if (file is null)
         {
             await RespondAsync("No file with that hash found");
             return;
         }
-        
+
         switch (subCommands)
         {
             case EHashSubCommands.info:
             {
-                var embed = new EmbedBuilder()
-                    .WithTitle(file.Name)
-                    .WithColor(Color.Green)
-                    .WithCurrentTimestamp();
-                embed.AddField("Hash", $"```{file.RedFileId.ToString()}```");
-                embed.AddField("Archive", $"```{file.Archive}```");
-                if (file.Uses is not null)
-                {
-                    var val = string.Join('\n', file.Uses);
-                    embed.AddField("Uses", $"```{val.Clamp(1010)}```");
-                }
-                await RespondAsync(embed: embed.Build());
-                break;
-            }
-            case EHashSubCommands.uses:
-            {
-                await DeferAsync();
+                await DeferAsync(ephemeral);
+
+                var (embedBuilder, componentBuilder) = await BuildInfoMessage(file);
                 
-                var embed = new EmbedBuilder()
-                    .WithTitle(file.Name)
-                    .WithColor(Color.Green)
-                    .WithCurrentTimestamp();
-                if (file.Uses is not null)
-                {
-                    foreach (var use in file.Uses.Take(25))
-                    {
-                        // get file
-                        RedFile? usedFile;
-                        await using (var db = new RedDbContext())
-                        {
-                            usedFile = await db.Files.FirstOrDefaultAsync(x => x.RedFileId == use);
-                        }
-                        if (usedFile is null)
-                        {
-                            continue;
-                        }
-                        embed.AddField(usedFile.Name, $"`{usedFile.RedFileId}`");
-                    }
-                }
+                // todo: add button for usedby fetch
                 await Context.Interaction.ModifyOriginalResponseAsync(properties =>
                 {
-                    properties.Embed = embed.Build();
-                    //properties.Components = componentBuilder.Build();
+                    properties.Embed = embedBuilder.Build();
+                    if (componentBuilder != null)
+                        properties.Components = componentBuilder.Build();
                 });
-                //await RespondAsync(embed: embed.Build());
+
                 break;
             }
             case EHashSubCommands.usedby:
             {
-                await DeferAsync();
+                await DeferAsync(ephemeral);
                 
                 var embed = new EmbedBuilder()
-                    .WithTitle(file.Name)
+                    .WithTitle($"USED BY - {file.Name}")
+                    .WithDescription($"```{file.RedFileId.ToString()}```")
                     .WithColor(Color.Green)
                     .WithCurrentTimestamp();
-                
+
                 var pageResults = await GetDataBaseEntriesPaginated(file.RedFileId, EVanillaArchives.all, 1);
-                if (pageResults.Count == 0) return; 
-                
-                foreach (var usesFile in pageResults.Take(25))
-                    embed.AddField(usesFile.Name, $"hash: `{usesFile.RedFileId.ToString()}`");
+                if (pageResults.Count == 0) return;
+
+                ComponentBuilder? componentBuilder = null;
+                var results = pageResults.Take(25).ToList();
+                if (results.Count > 0)
+                {
+                    var menuBuilder = new SelectMenuBuilder()
+                        .WithPlaceholder("More info")
+                        .WithCustomId("menu-file")
+                        .WithMinValues(1)
+                        .WithMaxValues(1);
+                    foreach (var usesFile in results)
+                    {
+                        embed.AddField(usesFile.Name, $"`{usesFile.RedFileId.ToString()}`");
+                        menuBuilder.AddOption($"{usesFile.RedFileId}", $"{usesFile.RedFileId}", $"{usesFile.Name}");
+                    }
+                    componentBuilder = new ComponentBuilder().WithSelectMenu(menuBuilder);
+                }
                 
                 await Context.Interaction.ModifyOriginalResponseAsync(properties =>
                 {
                     properties.Embed = embed.Build();
-                    //properties.Components = componentBuilder.Build();
+                    if (componentBuilder != null)
+                    {
+                        properties.Components = componentBuilder.Build();
+                    }
                 });
                 //await RespondAsync(embed: embed.Build());
                 break;
@@ -122,8 +111,9 @@ public class Red4Module : InteractionModuleBase
                 throw new ArgumentOutOfRangeException(nameof(subCommands), subCommands, null);
         }
     }
-
+    
     /// <summary>
+    /// 
     /// </summary>
     /// <param name="contains"></param>
     /// <param name="archive"></param>
@@ -132,9 +122,10 @@ public class Red4Module : InteractionModuleBase
     public async Task FindCommand(
         string contains,
         EVanillaArchives archive = EVanillaArchives.all,
-        bool verbose = false)
+        bool verbose = false,
+        bool ephemeral = true)
     {
-        await DeferAsync();
+        await DeferAsync(ephemeral);
 
         var embed = new EmbedBuilder()
             .WithTitle($"Search query: {contains}")
@@ -156,9 +147,10 @@ public class Red4Module : InteractionModuleBase
         }
 
         var componentBuilder = new ComponentBuilder()
-            .WithButton("⬅️", "find-previous") //⬅➡⬅➡
-            .WithButton("➡️", "find-next")
-            .WithButton("❌️", "delete");
+                .WithButton("⬅️", "find-previous") //⬅➡⬅➡
+                .WithButton("➡️", "find-next")
+            //.WithButton("❌️", "delete")
+            ;
 
         await Context.Interaction.ModifyOriginalResponseAsync(properties =>
         {
@@ -168,8 +160,49 @@ public class Red4Module : InteractionModuleBase
 
         //await RespondAsync(embed: embed.Build(), components: componentBuilder.Build());
     }
+    
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="selectedIds"></param>
+    [ComponentInteraction("menu-file")]
+    public async Task ComponentInterActionMoreInfo(string[] selectedIds)
+    {
+        foreach (var id in selectedIds)
+            if (ulong.TryParse(id, out var hash))
+            {
+                RedFile? file;
+                await using (var db = new RedDbContext())
+                {
+                    file = await db.Files.FirstOrDefaultAsync(x => x.RedFileId == hash);
+                }
+                if (file is null)
+                {
+                    await RespondAsync("No file with that hash found");
+                    return;
+                }
+                //await DeferAsync(true);
 
+                var (embedBuilder, componentBuilder) = await BuildInfoMessage(file);
+                // componentBuilder ??= new ComponentBuilder();
+                // componentBuilder
+                //     .WithButton("Parent", "someid");
 
+                if (componentBuilder != null)
+                {
+                    await RespondAsync(embed: embedBuilder.Build(), components: componentBuilder.Build(), ephemeral: true);
+                }
+                else
+                {
+                    await RespondAsync(embed: embedBuilder.Build(), ephemeral: true);
+                }
+                
+            }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
     [ComponentInteraction("delete")]
     public async Task ComponentInteractionDelete()
     {
@@ -177,6 +210,10 @@ public class Red4Module : InteractionModuleBase
             await Context.Channel.DeleteMessageAsync(socket.Message);
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="direction"></param>
     [ComponentInteraction("find-*")]
     public async Task ComponentInteractionFind(string direction)
     {
@@ -184,7 +221,7 @@ public class Red4Module : InteractionModuleBase
 
         if (Context.Interaction is not SocketMessageComponent socket) return;
 
-        await DeferAsync();
+        await DeferAsync(true);
 
         var message = socket.Message;
         var messageEmbed = message.Embeds.First();
@@ -226,8 +263,48 @@ public class Red4Module : InteractionModuleBase
         }
     }
 
+    
+    #region methods
+    
+    private static async Task<(EmbedBuilder embedBuilder, ComponentBuilder? componentBuilder)> BuildInfoMessage(RedFile file)
+    {
+        ComponentBuilder? componentBuilder = null;
+        var embedBuilder = new EmbedBuilder()
+            .WithTitle($"INFO - {file.Name}")
+            .WithDescription($"```{file.RedFileId.ToString()}```")
+            .WithColor(Color.Green)
+            .WithCurrentTimestamp();
+        embedBuilder.AddField("Archive", $"```{file.Archive}```");
+        
+        if (file.Uses is not null)
+        {
+            var menuBuilder = new SelectMenuBuilder()
+                .WithPlaceholder("References in file")
+                .WithCustomId("menu-file")
+                .WithMinValues(1)
+                .WithMaxValues(1);
+            var refs = "```";
+            foreach (var use in file.Uses/*.Take(25)*/)
+            {
+                RedFile? usedFile;
+                await using (var db = new RedDbContext())
+                {
+                    usedFile = await db.Files.FirstOrDefaultAsync(x => x.RedFileId == use);
+                }
+                if (usedFile is null) continue;
+                refs += $"{usedFile.Name}\n";
+                //embedBuilder.AddField(usedFile.Name, $"`{usedFile.RedFileId}`");
+                menuBuilder.AddOption($"{usedFile.RedFileId}", $"{usedFile.RedFileId}", $"{usedFile.Name}");
+            }
+            embedBuilder.AddField("References in file", $"{refs.Clamp(1018)}```");
+            componentBuilder = new ComponentBuilder().WithSelectMenu(menuBuilder);
+        }
+        
+        return (embedBuilder, componentBuilder);
+    }
+
     private static async Task<List<RedFile>> GetDataBaseEntriesPaginated(
-        string contains, 
+        string contains,
         EVanillaArchives archive,
         int page)
     {
@@ -245,11 +322,12 @@ public class Red4Module : InteractionModuleBase
                 .Take(PageSize)
                 .ToListAsync();
         }
+
         return ret;
     }
-    
+
     private static async Task<List<RedFile>> GetDataBaseEntriesPaginated(
-        ulong parentHash, 
+        ulong parentHash,
         EVanillaArchives archive,
         int page)
     {
@@ -268,6 +346,9 @@ public class Red4Module : InteractionModuleBase
                 .Take(PageSize)
                 .ToListAsync();
         }
+
         return ret;
     }
+    
+    #endregion
 }

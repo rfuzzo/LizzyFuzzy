@@ -138,7 +138,7 @@ public class MessageReceivedHandler
     ///     Handles custom links in a message
     /// </summary>
     /// <param name="content"></param>
-    private async Task<IEnumerable<string>> HandleLinks(string content)
+    private static async Task<IEnumerable<string>> HandleLinks(string content)
     {
         // crawl text links
         const char linkStart = '[';
@@ -181,7 +181,7 @@ public class MessageReceivedHandler
     ///     Handles custom class links in a message
     /// </summary>
     /// <param name="content"></param>
-    private async Task<IEnumerable<(string, string)>> HandleClasses(string content)
+    private static async Task<IEnumerable<(string, string)>> HandleClasses(string content)
     {
         // crawl text links
         const char classStart = '{';
