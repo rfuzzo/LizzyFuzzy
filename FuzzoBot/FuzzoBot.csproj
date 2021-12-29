@@ -10,18 +10,18 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Discord.Net.Labs" Version="3.6.1"/>
-        <PackageReference Include="HtmlAgilityPack" Version="1.11.39"/>
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0"/>
+        <PackageReference Include="Discord.Net.Labs" Version="3.6.1" />
+        <PackageReference Include="HtmlAgilityPack" Version="1.11.39" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
     </ItemGroup>
 
     <ItemGroup>
-        <None Remove="Resources\ModTools.json"/>
-        <EmbeddedResource Include="Resources\ModTools.json"/>
+        <None Remove="Resources\ModTools.json" />
+        <EmbeddedResource Include="Resources\ModTools.json" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\RedDatabase\RedDatabase.csproj"/>
+        <ProjectReference Include="..\RedDatabase\RedDatabase.csproj" />
     </ItemGroup>
 
 </Project>
