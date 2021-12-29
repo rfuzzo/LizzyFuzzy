@@ -4,12 +4,13 @@ public static class Constants
 {
     public const string rfuzzo = @"<@382111410382962690>";
 
-    public class Guild
+    public static readonly Dictionary<string, ulong> Guilds = new()
     {
-        public const ulong test = 532643730730254337;
-        public const ulong moddingCmmmunity = 717692382849663036;
-    }
-
+        { "test", 532643730730254337},
+        { "community", 717692382849663036 },
+        { "other", 705931815109656596 },
+        { "amm", 420406569872916480 }
+    };
 
     public class Wiki
     {

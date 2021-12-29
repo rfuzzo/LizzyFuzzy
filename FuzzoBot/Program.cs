@@ -34,10 +34,11 @@ public class Program
         client.Ready += async () =>
         {
 #if DEBUG
-            await commands.RegisterCommandsToGuildAsync(Constants.Guild.test);
+            await commands.RegisterCommandsToGuildAsync(Constants.Guilds["test"]);
 #else
-            await commands.RegisterCommandsToGuildAsync(Constants.Guild.test, true);
-            await commands.RegisterCommandsToGuildAsync(Constants.Guild.moddingCmmmunity, true);
+            
+            await commands.RegisterCommandsToGuildAsync(Constants.Guilds["test"]);
+            await commands.RegisterCommandsToGuildAsync(Constants.Guilds["community"]);
 
             //await commands.RegisterCommandsGloballyAsync(true);
 #endif

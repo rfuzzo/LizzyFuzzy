@@ -223,7 +223,7 @@ public class MessageReceivedHandler
             var fields = doc.DocumentNode.SelectSingleNode("/html/body/div/div/div/div[2]/main/div[2]");
             var sb = new StringBuilder();
             sb.AppendLine("**Fields**");
-            sb.AppendLine("```");
+            sb.AppendLine("```swift");
             if (fields.ChildNodes.Count > 0)
                 // Fields
                 if (fields.ChildNodes.First().InnerText == "Fields")
@@ -234,7 +234,7 @@ public class MessageReceivedHandler
 
                         if (first != last)
                         {
-                            sb.AppendLine($"{first} {last}");
+                            sb.AppendLine($"{last} {first}");
                         }
                         else
                         {
@@ -243,9 +243,10 @@ public class MessageReceivedHandler
                     }
                         
             // Methods
-
-            sb.AppendLine("```");
-            var description = sb.ToString();
+            
+            var description = sb.ToString().Clamp(1012);
+            description += "\n...```";
+            
             finalClasses.Add((url, description));
         }
 
