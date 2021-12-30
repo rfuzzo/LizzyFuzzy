@@ -3,6 +3,7 @@ using System.Text;
 using Discord;
 using Discord.WebSocket;
 using FuzzoBot.Extensions;
+using FuzzoBot.Services;
 using HtmlAgilityPack;
 
 namespace FuzzoBot.Handlers;
@@ -22,22 +23,20 @@ public class MessageReceivedHandler
         { "http", 0.1 }
     };
 
-    private readonly DiscordSocketClient _client;
-
-    private readonly Dictionary<string, Emote> _emotes = new();
+    private readonly DiscordSocketClient _discordClient;
     private readonly Random _rand;
-
-    public MessageReceivedHandler(DiscordSocketClient client)
+    private readonly MemoryService _memoryService;
+    
+    
+    
+    public MessageReceivedHandler(
+        DiscordSocketClient discordClient,
+        MemoryService memoryService
+        )
     {
-        _client = client;
+        _discordClient = discordClient;
         _rand = new Random();
-
-        {
-            if (Emote.TryParse(Constants.Emotes.tos, out var emote)) _emotes.Add("tos", emote);
-        }
-        {
-            if (Emote.TryParse(Constants.Emotes.debug_emote, out var emote)) _emotes.Add("dbg", emote);
-        }
+        _memoryService = memoryService;
     }
 
     public async Task OnMessageReceived(SocketMessage rawMessage)
@@ -46,7 +45,7 @@ public class MessageReceivedHandler
         // Ignore system messages, or messages from other bots
         if (rawMessage is not SocketUserMessage message) return;
         if (message.Source != MessageSource.User) return;
-        if (rawMessage.Author.Id == _client.CurrentUser.Id || rawMessage.Author.IsBot) return;
+        if (rawMessage.Author.Id == _discordClient.CurrentUser.Id || rawMessage.Author.IsBot) return;
 
         var content = rawMessage.Content;
         if (string.IsNullOrEmpty(content)) return;
@@ -119,15 +118,63 @@ public class MessageReceivedHandler
 
             switch (p)
             {
-                case > 0.9:
-                    await message.ReplyAsync(
-                        $"This message is with {pOut}% probability a scam. Banning on sight. False positive? pinging {Constants.rfuzzo}");
+                case > 1.0:
+                {
+                    var strikes = _memoryService.StrikeUser(author);
+                    var outcome = strikes switch
+                        {
+                            >= Constants.BanCount => EStrikeOutCome.Ban,
+                            >= Constants.KickCount => EStrikeOutCome.Kick,
+                            _ => EStrikeOutCome.None
+                        };
+                    await message.ReplyAsync($"This message is with {pOut}% probability a scam. " +
+                                             $"Kicking after {Constants.KickCount - strikes} further scam messages. " +
+                                             $"Ban after {Constants.BanCount - strikes}.");    
+                    
+                    switch (outcome)
+                    {
+                        case EStrikeOutCome.None:
+                        case EStrikeOutCome.Warn:
+                            break;
+                        case EStrikeOutCome.Kick:
+                        {
+                            if (author is IGuildUser guildUser)
+                            {
+                                await guildUser.KickAsync($"Kicking scammer after {Constants.KickCount} strikes");
+                                await message.ReplyAsync($"User <@{guildUser.Id}> was kicked for sending scam messages. " +
+                                                         $"Pinging {Constants.rfuzzo} for review. " +
+                                                         $"{Constants.Emotes.thumbsup}");
+                            }
+                            break;
+                        }
+                        case EStrikeOutCome.Ban:
+                        {
+                            if (author is IGuildUser guildUser)
+                            {
+                                await guildUser.BanAsync(0,$"Kicking scammer after {Constants.KickCount} strikes");
+                                await message.ReplyAsync($"User <@{guildUser.Id}> was banned for sending scam messages. " +
+                                                         $"Pinging {Constants.rfuzzo} for review. " +
+                                                         $"{Constants.Emotes.thumbsup}");
+                            }
+                            break;
+                        }
+                        default:
+                            throw new ArgumentOutOfRangeException();
+                    }
+                    
                     await rawMessage.DeleteAsync();
                     return true;
+                }
                 case > 0.6:
+                {
+                    //False positive?
+                    var componentBuilder = new ComponentBuilder()
+                        .WithButton("False positive?", "ping-owner");
+                    
                     await message.ReplyAsync(
-                        $"This message is with {pOut}% probability a scam. pinging {Constants.rfuzzo}");
+                        $"This message is with {pOut}% probability a scam.", components: componentBuilder.Build());
                     return true;
+                }
             }
 
             return false;

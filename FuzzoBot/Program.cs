@@ -4,6 +4,7 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using FuzzoBot;
 using FuzzoBot.Handlers;
+using FuzzoBot.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 public class Program
@@ -82,6 +83,7 @@ public class Program
                     LogLevel = LogSeverity.Info
                 }))
             .AddSingleton<CommandHandler>()
+            .AddSingleton<MemoryService>()
             .AddSingleton<MessageReceivedHandler>()
             .BuildServiceProvider();
     }

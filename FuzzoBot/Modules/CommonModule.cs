@@ -1,6 +1,7 @@
 using System.Net;
 using Discord;
 using Discord.Interactions;
+using Discord.WebSocket;
 using FuzzoBot.Utility;
 
 namespace FuzzoBot.Modules;
@@ -51,14 +52,14 @@ public class CommonModule : InteractionModuleBase
         }
     }
 
-    /// <summary>
-    /// 
-    /// </summary>
-    [SlashCommand("ping", "Checks the bot connection")]
-    public async Task Ping()
-    {
-        await RespondAsync("pong");
-    }
+    // /// <summary>
+    // /// 
+    // /// </summary>
+    // [SlashCommand("ping", "Checks the bot connection")]
+    // public async Task Ping()
+    // {
+    //     await RespondAsync("pong");
+    // }
 
     /// <summary>
     /// 
@@ -70,4 +71,21 @@ public class CommonModule : InteractionModuleBase
         if (Emote.TryParse(emote, out var discordEmote)) await RespondAsync(discordEmote.Url);
     }
     
+    
+    
+    
+    
+    /// <summary>
+    /// 
+    /// </summary>
+    [ComponentInteraction("ping-*")]
+    public async Task ComponentInteractionPing(string userLabel)
+    {
+        switch (userLabel)
+        {
+            case "owner":
+                await RespondAsync($"Pinging {Constants.rfuzzo} for review. {Constants.Emotes.smile}");
+                break;
+        }
+    }
 }

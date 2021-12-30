@@ -4,6 +4,9 @@ public static class Constants
 {
     public const string rfuzzo = @"<@382111410382962690>";
 
+    public const int KickCount = 3;
+    public const int BanCount = 5;
+
     public static readonly Dictionary<string, ulong> Guilds = new()
     {
         { "test", 532643730730254337},
@@ -22,6 +25,10 @@ public static class Constants
     {
         // debug
         public static string debug_emote = @"<:holyC:695709609742041118>";
+        
         public static string tos = @"<a:peepoTOS:892372867663159316>";
+        public static string smile = @"<:smile:865304332197691433>";
+        public static string thumbsup = @"<:peepothumbsup:847820160383713329>";
+        public static string loading = @"<:loading:926156909994725406> ";
     }
 }
