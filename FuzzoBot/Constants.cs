@@ -15,12 +15,18 @@ public static class Constants
         { "amm", 420406569872916480 }
     };
 
-    public class Wiki
+    public static class Wiki
     {
         public const string Url = @"https://wiki.redmodding.org/";
         public const string EditorInvite = @"https://app.gitbook.com/invite/-MP5ijqI11FeeX7c8-N8/H70HZBOeUulIpkQnBLK7";
     }
 
+    public static class Red4
+    {
+        public const string NativeDb = @"https://nativedb.red4ext.com/";
+        public const string NativeDbClassInfo = @"https://nativedb.red4ext.com/_next/data/";//b_1yh1CbxCyfxzLaTQW6q/{{ name }}.json";
+    }
+    
     public static class Emotes
     {
         // debug

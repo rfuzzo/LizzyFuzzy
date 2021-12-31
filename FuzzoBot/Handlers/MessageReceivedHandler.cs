@@ -1,8 +1,10 @@
 using System.Net;
 using System.Text;
+using System.Text.Json;
 using Discord;
 using Discord.WebSocket;
 using FuzzoBot.Extensions;
+using FuzzoBot.Models;
 using FuzzoBot.Services;
 using HtmlAgilityPack;
 
@@ -68,23 +70,58 @@ public class MessageReceivedHandler
         if (links.Count > 0 || classes.Count > 0)
         {
             var embed = new EmbedBuilder()
-                .WithUrl("https://nativedb.red4ext.com")
-                .WithTitle("Links:")
-                .WithColor(Color.Red)
-                .WithCurrentTimestamp();
+                //.WithUrl("https://nativedb.red4ext.com")
+                //.WithTitle("Links:")
+                .WithColor(Color.Blue)
+                //.WithCurrentTimestamp()
+                ;
 
             if (links.Count > 0)
             {
                 var description = string.Join('\n', links);
                 if (description.Length > 4096) description = description[..4096];
                 embed.WithDescription(description);
+                await message.ReplyAsync(embed: embed.Build(), allowedMentions: AllowedMentions.None);
             }
 
             if (classes.Count > 0)
-                foreach (var c in classes)
-                    embed.AddField(c.Item1, c.Item2);
-
-            await message.ReplyAsync(embed: embed.Build(), allowedMentions: AllowedMentions.None);
+            {
+                foreach (var (url, classInfo) in classes)
+                {
+                    embed
+                        .WithUrl(url)
+                        .WithTitle(classInfo.name);
+                    // fields
+                    var sb = new StringBuilder();
+                    sb.AppendLine("**Fields**");
+                    if (classInfo?.props != null)
+                        sb.AppendLine(classInfo.props.Aggregate("```swift\n",
+                            (current, prop) => current + $"var {prop.name} : {prop.type}\n"));
+                    sb.AppendLine("```");
+                    
+                    // methods
+                    sb.AppendLine("**Methods**");
+                    sb.AppendLine("```swift");
+                    if (classInfo?.funcs != null)
+                        foreach (var f in classInfo.funcs)
+                        {
+                            var fReturn = f.@return is not null 
+                                ? $" : {f.@return.type}" 
+                                : "";
+                            var fParams = f.@params is not null 
+                                ? string.Join(", ", f.@params.Select(x => $"{x.name} : {x.type}")) 
+                                : ""; 
+                            
+                            sb.AppendLine($"{f.shortName}({fParams}){fReturn}");
+                        }
+                    
+                    var desc = sb.ToString().Clamp(4093);
+                    desc += "```";
+                    embed.WithDescription(desc);
+                    
+                    await message.ReplyAsync(embed: embed.Build(), allowedMentions: AllowedMentions.None);
+                }
+            }
         }
 
 
@@ -99,7 +136,7 @@ public class MessageReceivedHandler
         async Task<bool> HandleVandalism()
         {
             double p = 0;
-            foreach (var (key, value) in DictSpam)
+            foreach (var (key, _) in DictSpam)
                 if (content.Contains(key))
                     p += DictSpam[key];
 
@@ -134,7 +171,7 @@ public class MessageReceivedHandler
                     switch (outcome)
                     {
                         case EStrikeOutCome.None:
-                        case EStrikeOutCome.Warn:
+                        //case EStrikeOutCome.Warn:
                             break;
                         case EStrikeOutCome.Kick:
                         {
@@ -210,12 +247,13 @@ public class MessageReceivedHandler
 
             lastChar = c;
         }
-
-        const string root = @"https://nativedb.red4ext.com/";
+        
         using var client = new HttpClient();
 
         var finalLinks = new List<string>();
-        foreach (var url in links.Select(link => $"{root}{link}"))
+        foreach (var url in links
+                     .Distinct()
+                     .Select(link => $"{Constants.Red4.NativeDb}{link}"))
         {
             var response = await client.GetAsync(url);
             if (response.StatusCode == HttpStatusCode.OK) finalLinks.Add(url);
@@ -228,7 +266,7 @@ public class MessageReceivedHandler
     ///     Handles custom class links in a message
     /// </summary>
     /// <param name="content"></param>
-    private static async Task<IEnumerable<(string, string)>> HandleClasses(string content)
+    private static async Task<IEnumerable<(string, Data)>> HandleClasses(string content)
     {
         // crawl text links
         const char classStart = '{';
@@ -255,46 +293,28 @@ public class MessageReceivedHandler
             lastChar = c;
         }
 
-        const string root = @"https://nativedb.red4ext.com/";
-        using var client = new HttpClient();
+        return await GetNativeClassInfo(classes.Distinct());
+    }
 
-        var finalClasses = new List<(string, string)>();
-        foreach (var url in classes.Select(c => $"{root}{c}"))
+    private static async Task<List<(string, Data)>> GetNativeClassInfo(IEnumerable<string> classes)
+    {
+        var finalClasses = new List<(string, Data)>();
+
+        using var client = new HttpClient();
+        foreach (var className in classes)
         {
+            var url = $"{Constants.Red4.NativeDb}{className}";
             var response = await client.GetAsync(url);
             if (response.StatusCode != HttpStatusCode.OK) continue;
 
-            var html = response.Content.ReadAsStringAsync().Result;
             var doc = new HtmlDocument();
-            doc.LoadHtml(html);
-            var fields = doc.DocumentNode.SelectSingleNode("/html/body/div/div/div/div[2]/main/div[2]");
-            var sb = new StringBuilder();
-            sb.AppendLine("**Fields**");
-            sb.AppendLine("```swift");
-            if (fields.ChildNodes.Count > 0)
-                // Fields
-                if (fields.ChildNodes.First().InnerText == "Fields")
-                    foreach (var childNode in fields.ChildNodes.Skip(1))
-                    {
-                        var first = childNode.FirstChild.InnerText;
-                        var last = childNode.LastChild.InnerText;
-
-                        if (first != last)
-                        {
-                            sb.AppendLine($"{last} {first}");
-                        }
-                        else
-                        {
-                            sb.AppendLine($"{first}");
-                        }
-                    }
-                        
-            // Methods
+            doc.LoadHtml(await response.Content.ReadAsStringAsync());
+            var nextData = doc.DocumentNode.SelectSingleNode("//*[@id=\"__NEXT_DATA__\"]");
+            var scriptData = JsonSerializer.Deserialize<Root>(nextData.InnerText);
             
-            var description = sb.ToString().Clamp(1012);
-            description += "\n...```";
+            if (scriptData?.props?.pageProps?.data is null) continue;
             
-            finalClasses.Add((url, description));
+            finalClasses.Add((url, scriptData.props.pageProps.data));
         }
 
         return finalClasses;
