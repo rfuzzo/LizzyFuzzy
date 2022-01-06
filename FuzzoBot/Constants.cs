@@ -10,6 +10,7 @@ public static class Constants
     public static readonly Dictionary<string, ulong> Guilds = new()
     {
         { "test", 532643730730254337},
+        { "gpm", 917893578460655677 },
         { "community", 717692382849663036 },
         { "other", 705931815109656596 },
         { "amm", 420406569872916480 }

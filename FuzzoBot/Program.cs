@@ -40,6 +40,7 @@ public class Program
             
             await commands.RegisterCommandsToGuildAsync(Constants.Guilds["test"]);
             await commands.RegisterCommandsToGuildAsync(Constants.Guilds["community"]);
+            await commands.RegisterCommandsToGuildAsync(Constants.Guilds["gpm"]);
 
             //await commands.RegisterCommandsGloballyAsync(true);
 #endif
