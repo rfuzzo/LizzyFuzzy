@@ -38,7 +38,7 @@ public class Program
             await commands.RegisterCommandsToGuildAsync(Constants.Guilds["test"]);
 #else
             
-            await commands.RegisterCommandsToGuildAsync(Constants.Guilds["test"]);
+            //await commands.RegisterCommandsToGuildAsync(Constants.Guilds["test"]);
             await commands.RegisterCommandsToGuildAsync(Constants.Guilds["community"]);
             await commands.RegisterCommandsToGuildAsync(Constants.Guilds["gpm"]);
 
