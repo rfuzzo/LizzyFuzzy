@@ -1,6 +1,7 @@
 name: heroku deploy docker
 
 on:
+  workflow_dispatch:
   push:
     branches: [ main ]
 
