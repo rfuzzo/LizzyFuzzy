@@ -18,7 +18,8 @@ public class CommonModule : InteractionModuleBase
     [UserCommand("Get user avatar")]
     public async Task GetAvatarUrl(IUser user)
     {
-        await RespondAsync(user.GetAvatarUrl());
+        await DeferAsync();
+        await FollowupAsync(user.GetAvatarUrl());
     }
 
 
@@ -30,7 +31,6 @@ public class CommonModule : InteractionModuleBase
     public async Task StartPoll([Summary(description: "The topic for the poll")] string topic)
     {
         await DeferAsync();
-        //Console.WriteLine($"{RespondAsync("Poll").Result}");
         var emotes = new[]
         {
             new Emoji("👍"),
@@ -50,11 +50,17 @@ public class CommonModule : InteractionModuleBase
     /// <summary>
     /// 
     /// </summary>
-    /// <param name="msg"></param>
-    [MessageCommand("Get emote url")]
-    public async Task GetCustomEmoteUrl(IMessage msg)
+    /// <param name="message"></param>
+    [MessageCommand("Get custom emote url")]
+    public async Task GetCustomEmoteUrl(IMessage message)
     {
-        if (Emote.TryParse(msg.Content, out var discordEmote)) await RespondAsync(discordEmote.Url);
+        if (Emote.TryParse(message.Content, out var discordEmote)) {
+            await DeferAsync();
+            await FollowupAsync(discordEmote.Url);
+        } else {
+            await DeferAsync(ephemeral: true);
+            await FollowupAsync(ephemeral: true, text: "Unable to parse the emote.");
+        }
     }
 
     /// <summary>
@@ -73,7 +79,13 @@ public class CommonModule : InteractionModuleBase
             {
                 await using var stream = await response.Content.ReadAsStreamAsync();
                 var result = await Context.Guild.CreateEmoteAsync(emote.Name, new Image(stream));
-                if (result is not null) await RespondAsync($"Added emote to server: {result}");
+                if (result is not null) {
+                    await DeferAsync();
+                    await FollowupAsync($"Added emote to server: {result}");
+                } else {
+                    await DeferAsync(ephemeral: true);
+                    await FollowupAsync(ephemeral: true, text: "Unable to create the new emote.");
+                }
             }
         }
     }
@@ -94,12 +106,14 @@ public class CommonModule : InteractionModuleBase
     [SlashCommand("emote", "Get emote url")]
     public async Task EchoEmote([Summary(description: "the custom emote")] string emote)
     {
-        if (Emote.TryParse(emote, out var discordEmote)) await RespondAsync(discordEmote.Url);
+        if (Emote.TryParse(emote, out var discordEmote)) {
+            await DeferAsync();
+            await FollowupAsync(discordEmote.Url);
+        } else {
+            await DeferAsync(ephemeral: true);
+            await FollowupAsync(ephemeral: true, text: "Unable to get the URL for the emote.");
+        }
     }
-    
-    
-    
-    
     
     /// <summary>
     /// 
@@ -110,7 +124,12 @@ public class CommonModule : InteractionModuleBase
         switch (userLabel)
         {
             case "owner":
-                await RespondAsync($"Pinging {Constants.rfuzzo} for review. {Constants.Emotes.smile}");
+                await DeferAsync();
+                await FollowupAsync($"Pinging {Constants.rfuzzo} for review. {Constants.Emotes.smile}");
+                break;
+            default:
+                await DeferAsync();
+                await FollowupAsync("Unable to ping.");
                 break;
         }
     }

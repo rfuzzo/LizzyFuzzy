@@ -28,7 +28,8 @@ public class ModdingModules : InteractionModuleBase
 
         embed.AddField(@"🌐 Invite link", Constants.Wiki.EditorInvite);
 
-        await RespondAsync(embed: embed.Build());
+        await DeferAsync();
+        await FollowupAsync(embed: embed.Build());
     }
 
     /// <summary>
@@ -58,7 +59,8 @@ public class ModdingModules : InteractionModuleBase
             embed.AddField(@"🌐 Url", tool.Url);
             embed.AddField(@"❓ Wiki", tool.Wiki);
             foreach (var (title, value) in tool.Fields) embed.AddField(title, value);
-            await RespondAsync(embed: embed.Build());
+            await DeferAsync();
+            await FollowupAsync(embed: embed.Build());
         }
     }
     
@@ -81,13 +83,15 @@ public class ModdingModules : InteractionModuleBase
 
                 if (stream.Length < 148)
                 {
-                    await RespondAsync($"{attachment.Filename} - that's not a dds file...");
+                    await DeferAsync(ephemeral: true);
+                    await FollowupAsync(ephemeral: true, text: $"{attachment.Filename} - that's not a dds file...");
                     return;
                 }
 
                 if (br.ReadInt32() != 0x20534444)
                 {
-                    await RespondAsync($"{attachment.Filename} - that's not a dds file...");
+                    await DeferAsync(ephemeral: true);
+                    await FollowupAsync(ephemeral: true, text: $"{attachment.Filename} - that's not a dds file...");
                     return;
                 }
 
@@ -95,9 +99,12 @@ public class ModdingModules : InteractionModuleBase
                 br.ReadBytes(80);
                 if (br.ReadInt32() != 0x30315844)
                 {
-                    await RespondAsync($"{attachment.Filename} - that's not a dx10 dds file...");
+                    await DeferAsync(ephemeral: true);
+                    await FollowupAsync(ephemeral: true, text: $"{attachment.Filename} - that's not a dx10 dds file...");
                     return;
                 }
+                
+                await DeferAsync();
 
                 br.ReadBytes(40);
                 var fmt = (DXGI_FORMAT)br.ReadInt32();
@@ -108,7 +115,7 @@ public class ModdingModules : InteractionModuleBase
                     .WithDescription($"➡ DDS format: `{fmt.ToString()}`")
                     //.WithThumbnailUrl()
                     .WithCurrentTimestamp();
-                await RespondAsync(embed: embed.Build());
+                await FollowupAsync(embed: embed.Build());
             }
         }
     }
