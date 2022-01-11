@@ -6,6 +6,7 @@ using FuzzoBot;
 using FuzzoBot.Handlers;
 using FuzzoBot.Services;
 using Microsoft.Extensions.DependencyInjection;
+using dotenv.net;
 
 public class Program
 {
@@ -25,6 +26,9 @@ public class Program
             Console.WriteLine("done.");
         }
 
+        // Load environment variables from .env file
+        DotEnv.Load();
+
         using var services = ConfigureServices( /*configuration*/);
         var client = services.GetRequiredService<DiscordSocketClient>();
         var commands = services.GetRequiredService<InteractionService>();
@@ -37,7 +41,6 @@ public class Program
 #if DEBUG
             await commands.RegisterCommandsToGuildAsync(Constants.Guilds["test"]);
 #else
-            
             //await commands.RegisterCommandsToGuildAsync(Constants.Guilds["test"]);
             await commands.RegisterCommandsToGuildAsync(Constants.Guilds["community"]);
             await commands.RegisterCommandsToGuildAsync(Constants.Guilds["gpm"]);
