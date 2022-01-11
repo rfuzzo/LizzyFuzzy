@@ -21,6 +21,32 @@ public class CommonModule : InteractionModuleBase
         await RespondAsync(user.GetAvatarUrl());
     }
 
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="topic"></param>
+    [SlashCommand("poll", "Start a poll")]
+    public async Task StartPoll([Summary(description: "The topic for the poll")] string topic)
+    {
+        await DeferAsync();
+        //Console.WriteLine($"{RespondAsync("Poll").Result}");
+        var emotes = new[]
+        {
+            new Emoji("👍"),
+            new Emoji("👎")
+        };
+        var botUser = Context.Client.CurrentUser;
+        var embed = new EmbedBuilder()
+            .WithTitle("Poll")
+            .WithColor(Color.Red)
+            .WithFooter(footer => { footer.Text = botUser.Username; footer.IconUrl = botUser.GetAvatarUrl(); })
+            .WithDescription(topic)
+            .WithCurrentTimestamp();
+        var pollMessage = await FollowupAsync(embed: embed.Build());
+        await pollMessage.AddReactionsAsync(emotes);
+    }
+
     /// <summary>
     /// 
     /// </summary>
