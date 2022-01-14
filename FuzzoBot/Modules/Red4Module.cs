@@ -35,7 +35,10 @@ public class Red4Module : InteractionModuleBase
         string hash,
         bool ephemeral = true)
     {
-        if (!ulong.TryParse(hash, out var uhash)) await RespondAsync("Not a valid hash");
+        if (!ulong.TryParse(hash, out var uhash)) {
+            await DeferAsync(ephemeral: true);
+            await FollowupAsync(ephemeral: true, text: "Not a valid hash.");
+        }
 
         RedFile? file;
         await using (var db = new RedDbContext())
@@ -44,7 +47,8 @@ public class Red4Module : InteractionModuleBase
         }
         if (file is null)
         {
-            await RespondAsync("No file with that hash found");
+            await DeferAsync(ephemeral: true);
+            await FollowupAsync(ephemeral: true, text: "No file with that hash found");
             return;
         }
 
@@ -178,7 +182,8 @@ public class Red4Module : InteractionModuleBase
                 }
                 if (file is null)
                 {
-                    await RespondAsync("No file with that hash found");
+                    await DeferAsync(ephemeral: true);
+                    await FollowupAsync(ephemeral: true, text: "No file with that hash found.");
                     return;
                 }
                 //await DeferAsync(true);
@@ -190,11 +195,13 @@ public class Red4Module : InteractionModuleBase
 
                 if (componentBuilder != null)
                 {
-                    await RespondAsync(embed: embedBuilder.Build(), components: componentBuilder.Build(), ephemeral: true);
+                    await DeferAsync();
+                    await FollowupAsync(embed: embedBuilder.Build(), components: componentBuilder.Build(), ephemeral: true);
                 }
                 else
                 {
-                    await RespondAsync(embed: embedBuilder.Build(), ephemeral: true);
+                    await DeferAsync();
+                    await FollowupAsync(embed: embedBuilder.Build(), ephemeral: true);
                 }
                 
             }
