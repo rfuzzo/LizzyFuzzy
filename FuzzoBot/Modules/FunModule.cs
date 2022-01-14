@@ -12,7 +12,7 @@ public class FunModule : InteractionModuleBase
     /// </summary>
     /// <param name="memeTemplate"></param>
     [SlashCommand("meme", "Generate a meme")]
-    public async Task GenerateMeme([Summary(description: "Template for the meme")]MemeTemplate memeTemplate, string text1 = "", string text2 = "", string text3 = "", string text4 = "")
+    public async Task GenerateMeme([Summary(description: "Template for the meme")]MemeTemplate memeTemplate, [Summary(description: "Optional text to fit in the first text location on the meme template (if it exists)")]string text1 = "", [Summary(description: "Optional text to fit in the second text location on the meme template (if it exists)")]string text2 = "", [Summary(description: "Optional text to fit in the third text location on the meme template (if it exists)")]string text3 = "", [Summary(description: "Optional text to fit in the fourth text location on the meme template (if it exists)")]string text4 = "")
     {
         await DeferAsync();
         string finalTextString = "";
