@@ -75,6 +75,7 @@ public class ModdingModules : InteractionModuleBase
     private static void SaveDict(Dictionary<string, int> dict)
     {
         string dictPath = Path.GetFullPath(Path.Combine("Resources", "mods.json"));
+        Directory.CreateDirectory(Path.GetFullPath(Path.Combine("Resources")));
         File.WriteAllText(dictPath, JsonSerializer.Serialize(dict, new JsonSerializerOptions() { WriteIndented = true }));
     }
 
