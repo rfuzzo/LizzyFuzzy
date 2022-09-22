@@ -4,7 +4,6 @@ WORKDIR /app
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
 COPY ["FuzzoBot/FuzzoBot.csproj", "FuzzoBot/"]
-COPY ["RedDatabase/RedDatabase.csproj", "RedDatabase/"]
 RUN dotnet restore "FuzzoBot/FuzzoBot.csproj"
 COPY . .
 WORKDIR "/src/FuzzoBot"
