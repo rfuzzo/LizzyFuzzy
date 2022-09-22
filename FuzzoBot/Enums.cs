@@ -8,7 +8,9 @@ public enum ModdingTool
     Red4Ext,
     Redscript,
     WolvenKit,
-    MlsetupBuilder
+    MlsetupBuilder,
+    TweakXL,
+    ArchiveXL
 }
 
 public enum MemeTemplate
@@ -203,7 +205,7 @@ public enum EVanillaArchives
     memoryresident_1_general
 }
 
-enum DXGI_FORMAT
+internal enum DXGI_FORMAT
 {
     DXGI_FORMAT_UNKNOWN,
     DXGI_FORMAT_R32G32B32A32_TYPELESS,

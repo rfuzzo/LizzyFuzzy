@@ -28,4 +28,8 @@ public static class LoggingProvider
 
         return Task.CompletedTask;
     }
+
+    public static Task Log(string message) => Log(new LogMessage(LogSeverity.Info, "", message));
+    public static Task Log(Exception exception) => Log(new LogMessage(LogSeverity.Error, "", exception.Message, exception));
+    public static Task Log(LogSeverity severity, string message) => Log(new LogMessage(severity, "", message));
 }
