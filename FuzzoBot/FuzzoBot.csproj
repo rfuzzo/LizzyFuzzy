@@ -16,9 +16,4 @@
         <PackageReference Include="dotenv.net" Version="3.1.1" />
     </ItemGroup>
 
-    <ItemGroup>
-        <None Remove="Resources\ModTools.json" />
-        <EmbeddedResource Include="Resources\ModTools.json" />
-    </ItemGroup>
-
 </Project>

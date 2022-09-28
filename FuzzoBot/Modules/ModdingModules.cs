@@ -18,6 +18,78 @@ public class ModdingModules : InteractionModuleBase
     /// <summary>
     /// 
     /// </summary>
+    [SlashCommand("help", "Get help with some topic.")]
+    public async Task Help(string tag)
+    {
+        Dictionary<string, BotTag> dict = await ResourceUtil.LoadTagsDictAsync();
+
+        // check if tag in dict
+        if (dict.ContainsKey(tag))
+        {
+            await DeferAsync(ephemeral: false);
+            await FollowupAsync(ephemeral: false, text: dict[tag].Body);
+        }
+        else
+        {
+            await DeferAsync(ephemeral: true);
+            await FollowupAsync(ephemeral: true, text: $"No help tag \"{tag}\" registered.");
+        }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    [SlashCommand("searchhelp", "Get help with some topic.")]
+    public async Task SearchHelp(string searchTerm)
+    {
+        List<string> results = new();
+        Dictionary<string, BotTag> dict = await ResourceUtil.LoadTagsDictAsync();
+
+        foreach ((string key, BotTag _) in dict)
+        {
+            if (key.Contains(searchTerm))
+            {
+                results.Add(key);
+            }
+        }
+
+        if (!results.Any())
+        {
+            await DeferAsync(ephemeral: true);
+            await FollowupAsync(ephemeral: true, text: $"No tags found for \"{searchTerm}\".");
+            return;
+        }
+
+        EmbedBuilder embed = new EmbedBuilder()
+               .WithTitle($"Mods - {searchTerm}")
+               .WithColor(Color.Green)
+               .WithCurrentTimestamp();
+
+        foreach (string item in results)
+        {
+            embed.AddField(item, "");
+        }
+
+        await DeferAsync();
+        await FollowupAsync(embed: embed.Build());
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    [DefaultMemberPermissions(GuildPermission.BanMembers)]
+    [SlashCommand("reload", "Reload commands.")]
+    public async Task Reload()
+    {
+        ResourceUtil.Reload();
+
+        await DeferAsync(ephemeral: true);
+        await FollowupAsync(ephemeral: true, text: $"Done.");
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
     [SlashCommand("registermod", "Register a mod.")]
     public async Task RegisterMod(string modName, int nexusId)
     {
@@ -31,7 +103,7 @@ public class ModdingModules : InteractionModuleBase
         if (dict.ContainsKey(modName))
         {
             await DeferAsync(ephemeral: true);
-            await FollowupAsync(ephemeral: true, text: $"Mod {modName} already registered.");
+            await FollowupAsync(ephemeral: true, text: $"Mod \"{modName}\" already registered.");
             return;
         }
         else
@@ -41,7 +113,7 @@ public class ModdingModules : InteractionModuleBase
                 if (value == nexusId)
                 {
                     await DeferAsync(ephemeral: true);
-                    await FollowupAsync(ephemeral: true, text: $"Mod already registered with tag {key}.");
+                    await FollowupAsync(ephemeral: true, text: $"Mod already registered with tag \"{key}\".");
                     return;
                 }
             }
@@ -69,7 +141,7 @@ public class ModdingModules : InteractionModuleBase
         SaveDict(dict);
 
         await DeferAsync(ephemeral: false);
-        await FollowupAsync(ephemeral: false, text: $"Mod registered with tag {modName}.");
+        await FollowupAsync(ephemeral: false, text: $"Mod registered with tag \"{modName}\".");
     }
 
     private static void SaveDict(Dictionary<string, int> dict)
@@ -124,7 +196,7 @@ public class ModdingModules : InteractionModuleBase
         else
         {
             await DeferAsync(ephemeral: true);
-            await FollowupAsync(ephemeral: true, text: $"No mod with tag {modName} registered.");
+            await FollowupAsync(ephemeral: true, text: $"No mod with tag \"{modName}\" registered.");
         }
     }
 
@@ -153,7 +225,7 @@ public class ModdingModules : InteractionModuleBase
         if (!results.Any())
         {
             await DeferAsync(ephemeral: true);
-            await FollowupAsync(ephemeral: true, text: $"No mods found for {searchTerm}.");
+            await FollowupAsync(ephemeral: true, text: $"No mods found for \"{searchTerm}\".");
             return;
         }
 
@@ -169,7 +241,6 @@ public class ModdingModules : InteractionModuleBase
 
         await DeferAsync();
         await FollowupAsync(embed: embed.Build());
-
     }
 
     /// <summary>
@@ -231,7 +302,7 @@ public class ModdingModules : InteractionModuleBase
     [SlashCommand("info", "Send info on the selected modding tool")]
     public async Task InfoCommand(ModdingTool moddingTool)
     {
-        Dictionary<string, Models.ModTool> toolsDict = await ResourceUtil.GetModToolsAsync();
+        Dictionary<string, Models.ModTool> toolsDict = await ResourceUtil.LoadModToolsDictAsync();
 
         // try get 
         if (toolsDict.TryGetValue(moddingTool.ToString(), out Models.ModTool? tool))

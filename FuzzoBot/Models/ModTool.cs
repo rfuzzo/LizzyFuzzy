@@ -11,4 +11,6 @@ public record class ModTool(
     ModToolInfoField[] Fields
 );
 
+public record class BotTag(string Body);
+
 public record class ModToolInfoField(string Title, string Value);

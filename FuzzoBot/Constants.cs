@@ -25,14 +25,14 @@ public static class Constants
     public static class Red4
     {
         public const string NativeDb = @"https://nativedb.red4ext.com/";
-        public const string NativeDbClassInfo = @"https://nativedb.red4ext.com/_next/data/";//b_1yh1CbxCyfxzLaTQW6q/{{ name }}.json";
+        public const string NativeDbClassInfo = @"https://nativedb.red4ext.com/_next/data/";
     }
-    
+
     public static class Emotes
     {
         // debug
         public static string debug_emote = @"<:holyC:695709609742041118>";
-        
+
         public static string tos = @"<a:peepoTOS:892372867663159316>";
         public static string smile = @"<:smile:865304332197691433>";
         public static string thumbsup = @"<:peepothumbsup:847820160383713329>";
