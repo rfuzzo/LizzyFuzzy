@@ -40,7 +40,7 @@ public class ModdingModules : InteractionModuleBase
     /// 
     /// </summary>
     [SlashCommand("searchhelp", "Get help with some topic.")]
-    public async Task SearchHelp(string searchTerm)
+    public async Task SearchHelp(string searchTerm = "")
     {
         List<string> results = new();
         Dictionary<string, BotTag> dict = await ResourceUtil.LoadTagsDictAsync();
@@ -61,14 +61,21 @@ public class ModdingModules : InteractionModuleBase
         }
 
         EmbedBuilder embed = new EmbedBuilder()
-               .WithTitle($"Mods - {searchTerm}")
+               .WithTitle($"searchhelp - {searchTerm}")
                .WithColor(Color.Green)
                .WithCurrentTimestamp();
 
+        string body = "```\n";
         foreach (string item in results)
         {
-            embed.AddField(item, "");
+            body += $"{item}\n";
         }
+        body += "```";
+        if (string.IsNullOrEmpty(searchTerm))
+        {
+            searchTerm = "*";
+        }
+        embed.AddField(searchTerm, body);
 
         await DeferAsync();
         await FollowupAsync(embed: embed.Build());
@@ -204,7 +211,7 @@ public class ModdingModules : InteractionModuleBase
     /// 
     /// </summary>
     [SlashCommand("mods", "Search for a registered mod.")]
-    public async Task Mods(string searchTerm)
+    public async Task Mods(string searchTerm = "")
     {
         Dictionary<string, string> results = new();
         Dictionary<string, int>? dict = await LoadDict();
