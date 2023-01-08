@@ -1,5 +1,5 @@
-namespace FuzzoBot.Models
-{
+namespace FuzzoBot.Models;
+
 public record ModTool(
     string Title,
     string Description,
@@ -14,4 +14,3 @@ public record ModTool(
 public record BotTag(string Body);
 
 public record ModToolInfoField(string Title, string Value);
-}

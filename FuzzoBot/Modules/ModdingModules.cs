@@ -1,406 +1,307 @@
 using System;
 using System.Collections.Generic;
-using Discord;
-using Discord.Interactions;
-using FuzzoBot.Extensions;
-using FuzzoBot.Models;
-using FuzzoBot.Utility;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
-using System.Xml.Linq;
+using Discord;
+using Discord.Interactions;
+using FuzzoBot.Extensions;
+using FuzzoBot.Utility;
 
-namespace FuzzoBot.Modules
+namespace FuzzoBot.Modules;
+
+/// <summary>
+/// </summary>
+public class ModdingModules : InteractionModuleBase
 {
     /// <summary>
-    /// 
     /// </summary>
-    public class ModdingModules : InteractionModuleBase
+    [SlashCommand("help", "Get help with some topic.")]
+    public async Task Help(string tag)
     {
-        /// <summary>
-        /// 
-        /// </summary>
-        [SlashCommand("help", "Get help with some topic.")]
-        public async Task Help(string tag)
+        var dict = await ResourceUtil.LoadTagsDictAsync();
+
+        // check if tag in dict
+        if (dict.ContainsKey(tag))
         {
-            Dictionary<string, BotTag> dict = await ResourceUtil.LoadTagsDictAsync();
-
-            // check if tag in dict
-            if (dict.ContainsKey(tag))
-            {
-                await DeferAsync(ephemeral: false);
-                await FollowupAsync(ephemeral: false, text: dict[tag].Body);
-            }
-            else
-            {
-                await DeferAsync(ephemeral: true);
-                await FollowupAsync(ephemeral: true, text: $"No help tag \"{tag}\" registered.");
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        [SlashCommand("searchhelp", "Get help with some topic.")]
-        public async Task SearchHelp(string searchTerm = "")
-        {
-            List<string> results = new();
-            Dictionary<string, BotTag> dict = await ResourceUtil.LoadTagsDictAsync();
-
-            foreach ((string key, BotTag _) in dict)
-            {
-                if (key.Contains(searchTerm))
-                {
-                    results.Add(key);
-                }
-            }
-
-            if (!results.Any())
-            {
-                await DeferAsync(ephemeral: true);
-                await FollowupAsync(ephemeral: true, text: $"No tags found for \"{searchTerm}\".");
-                return;
-            }
-
-            EmbedBuilder embed = new EmbedBuilder()
-                .WithTitle($"searchhelp - {searchTerm}")
-                .WithColor(Color.Green)
-                .WithCurrentTimestamp();
-
-            string body = "```\n";
-            foreach (string item in results)
-            {
-                body += $"{item}\n";
-            }
-
-            body += "```";
-            if (string.IsNullOrEmpty(searchTerm))
-            {
-                searchTerm = "*";
-            }
-
-            embed.AddField(searchTerm, body);
-
             await DeferAsync();
-            await FollowupAsync(embed: embed.Build());
+            await FollowupAsync(ephemeral: false, text: dict[tag].Body);
+        }
+        else
+        {
+            await DeferAsync(true);
+            await FollowupAsync(ephemeral: true, text: $"No help tag \"{tag}\" registered.");
+        }
+    }
+
+    /// <summary>
+    /// </summary>
+    [SlashCommand("searchhelp", "Get help with some topic.")]
+    public async Task SearchHelp(string searchTerm = "")
+    {
+        List<string> results = new();
+        var dict = await ResourceUtil.LoadTagsDictAsync();
+
+        foreach ((var key, var _) in dict)
+            if (key.Contains(searchTerm))
+                results.Add(key);
+
+        if (!results.Any())
+        {
+            await DeferAsync(true);
+            await FollowupAsync(ephemeral: true, text: $"No tags found for \"{searchTerm}\".");
+            return;
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        [DefaultMemberPermissions(GuildPermission.BanMembers)]
-        [SlashCommand("reload", "Reload commands.")]
-        public async Task Reload()
-        {
-            ResourceUtil.Reload();
+        var embed = new EmbedBuilder()
+            .WithTitle($"searchhelp - {searchTerm}")
+            .WithColor(Color.Green)
+            .WithCurrentTimestamp();
 
-            await DeferAsync(ephemeral: true);
-            await FollowupAsync(ephemeral: true, text: $"Done.");
+        var body = "```\n";
+        foreach (var item in results) body += $"{item}\n";
+
+        body += "```";
+        if (string.IsNullOrEmpty(searchTerm)) searchTerm = "*";
+
+        embed.AddField(searchTerm, body);
+
+        await DeferAsync();
+        await FollowupAsync(embed: embed.Build());
+    }
+
+    /// <summary>
+    /// </summary>
+    [SlashCommand("registermod", "Register a mod.")]
+    public async Task RegisterMod(string modName, int nexusId)
+    {
+        var dict = await LoadDict();
+        if (dict is null) return;
+
+        // check if tag already in dict
+        if (dict.ContainsKey(modName))
+        {
+            await DeferAsync(true);
+            await FollowupAsync(ephemeral: true, text: $"Mod \"{modName}\" already registered.");
+            return;
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        [SlashCommand("registermod", "Register a mod.")]
-        public async Task RegisterMod(string modName, int nexusId)
+        foreach ((var key, var value) in dict)
+            if (value == nexusId)
+            {
+                await DeferAsync(true);
+                await FollowupAsync(ephemeral: true, text: $"Mod already registered with tag \"{key}\".");
+                return;
+            }
+
+        // check response
+        var nexusUrl = $"https://www.nexusmods.com/cyberpunk2077/mods/{nexusId}";
+        HttpClient client = new();
+        var response = await client.GetAsync(new Uri(nexusUrl));
+
+        try
         {
-            Dictionary<string, int>? dict = await LoadDict();
-            if (dict is null)
-            {
-                return;
-            }
+            response.EnsureSuccessStatusCode();
+        }
+        catch (HttpRequestException ex)
+        {
+            await DeferAsync(true);
+            await FollowupAsync(ephemeral: true, text: $"No mod with id {nexusId} exists on nexus.");
 
-            // check if tag already in dict
-            if (dict.ContainsKey(modName))
-            {
-                await DeferAsync(ephemeral: true);
-                await FollowupAsync(ephemeral: true, text: $"Mod \"{modName}\" already registered.");
-                return;
-            }
-            else
-            {
-                foreach ((string key, int value) in dict)
-                {
-                    if (value == nexusId)
-                    {
-                        await DeferAsync(ephemeral: true);
-                        await FollowupAsync(ephemeral: true, text: $"Mod already registered with tag \"{key}\".");
-                        return;
-                    }
-                }
-            }
+            await LoggingProvider.Log(ex);
+            return;
+        }
 
-            // check response
-            string nexusUrl = $"https://www.nexusmods.com/cyberpunk2077/mods/{nexusId}";
-            HttpClient _client = new();
-            HttpResponseMessage response = await _client.GetAsync(new Uri(nexusUrl));
+        dict.Add(modName, nexusId);
+        SaveDict(dict);
 
-            try
-            {
-                response.EnsureSuccessStatusCode();
-            }
-            catch (HttpRequestException ex)
-            {
-                await DeferAsync(ephemeral: true);
-                await FollowupAsync(ephemeral: true, text: $"No mod with id {nexusId} exists on nexus.");
+        await DeferAsync();
+        await FollowupAsync(ephemeral: false, text: $"Mod registered with tag \"{modName}\".");
+    }
 
-                await LoggingProvider.Log(ex);
-                return;
-            }
+    private static void SaveDict(Dictionary<string, int> dict)
+    {
+        var dictPath = Path.GetFullPath(Path.Combine("Resources", "mods.json"));
+        Directory.CreateDirectory(Path.GetFullPath(Path.Combine("Resources")));
+        File.WriteAllText(dictPath,
+            JsonSerializer.Serialize(dict, new JsonSerializerOptions { WriteIndented = true }));
+    }
 
-            dict.Add(modName, nexusId);
+    private async Task<Dictionary<string, int>?> LoadDict()
+    {
+        var dictPath = Path.GetFullPath(Path.Combine("Resources", "mods.json"));
+
+        if (!File.Exists(dictPath)) return new Dictionary<string, int>();
+
+        try
+        {
+            var json = await File.ReadAllTextAsync(dictPath);
+            var dict = JsonSerializer.Deserialize<Dictionary<string, int>>(json,
+                new JsonSerializerOptions { WriteIndented = true });
+            return dict;
+        }
+        catch (Exception ex)
+        {
+            await LoggingProvider.Log(ex);
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// </summary>
+    [SlashCommand("mod", "Get the Nexus link to a registered mod.")]
+    public async Task Mod(string modName)
+    {
+        var dict = await LoadDict();
+        if (dict is null) return;
+
+        // check if tag already in dict
+        if (dict.ContainsKey(modName))
+        {
+            var nexusUrl = $"https://www.nexusmods.com/cyberpunk2077/mods/{dict[modName]}";
+            await DeferAsync();
+            await FollowupAsync(ephemeral: false, text: $"[{modName}]\n{nexusUrl}");
+        }
+        else
+        {
+            await DeferAsync(true);
+            await FollowupAsync(ephemeral: true, text: $"No mod with tag \"{modName}\" registered.");
+        }
+    }
+
+    /// <summary>
+    /// </summary>
+    [SlashCommand("deletemod", "Delete a registered mod.")]
+    public async Task Deletemod(string modName)
+    {
+        var dict = await LoadDict();
+        if (dict is null) return;
+
+        // check if tag already in dict
+        if (dict.ContainsKey(modName))
+        {
+            dict.Remove(modName);
             SaveDict(dict);
 
-            await DeferAsync(ephemeral: false);
-            await FollowupAsync(ephemeral: false, text: $"Mod registered with tag \"{modName}\".");
+            await DeferAsync();
+            await FollowupAsync(ephemeral: false, text: $"Mod with tag {modName} removed.");
         }
-
-        private static void SaveDict(Dictionary<string, int> dict)
+        else
         {
-            string dictPath = Path.GetFullPath(Path.Combine("Resources", "mods.json"));
-            Directory.CreateDirectory(Path.GetFullPath(Path.Combine("Resources")));
-            File.WriteAllText(dictPath,
-                JsonSerializer.Serialize(dict, new JsonSerializerOptions() { WriteIndented = true }));
+            await DeferAsync(true);
+            await FollowupAsync(ephemeral: true, text: $"No mod with tag {modName} registered.");
         }
+    }
 
-        private async Task<Dictionary<string, int>?> LoadDict()
+
+    /// <summary>
+    /// </summary>
+    [SlashCommand("wiki", "Get wiki info")]
+    public async Task Wiki()
+    {
+        var embed = new EmbedBuilder()
+            .WithTitle("The Red Modding Wiki")
+            .WithColor(Color.Red)
+            .WithAuthor(Context.Client.CurrentUser)
+            .WithUrl(Constants.Wiki.Url)
+            .WithDescription($"Welcome to the modding community wiki at {Constants.Wiki.Url}.\n" +
+                             "Please follow the below link to gain editor access:")
+            //.WithThumbnailUrl()
+            .WithCurrentTimestamp();
+
+        embed.AddField(@"🌐 Invite link", Constants.Wiki.EditorInvite);
+
+        await DeferAsync();
+        await FollowupAsync(embed: embed.Build());
+    }
+
+    /// <summary>
+    /// </summary>
+    /// <param name="moddingTool"></param>
+    [SlashCommand("info", "Send info on the selected modding tool")]
+    public async Task InfoCommand(ModdingTool moddingTool)
+    {
+        var toolsDict = await ResourceUtil.LoadModToolsDictAsync();
+
+        // try get 
+        if (toolsDict.TryGetValue(moddingTool.ToString(), out var tool))
         {
-            string dictPath = Path.GetFullPath(Path.Combine("Resources", "mods.json"));
+            var user = await Context.Client.GetUserAsync(tool.Author) ?? Context.Client.CurrentUser;
+            var thumbnail = !string.IsNullOrEmpty(tool.ThumbnailUrl) ? tool.ThumbnailUrl : user.GetAvatarUrl();
 
-            if (!File.Exists(dictPath))
-            {
-                return new Dictionary<string, int>();
-            }
+            var embed = new EmbedBuilder()
+                .WithTitle(tool.Title)
+                .WithColor(tool.Color.ToDiscordColor())
+                .WithAuthor(user)
+                .WithUrl(tool.Url)
+                .WithDescription(tool.Description)
+                .WithThumbnailUrl(thumbnail)
+                .WithCurrentTimestamp();
+            embed.AddField(@"🌐 Url", tool.Url);
+            embed.AddField(@"❓ Wiki", tool.Wiki);
+            foreach ((var title, var value) in tool.Fields) embed.AddField(title, value);
 
-            Dictionary<string, int>? dict;
-            try
-            {
-                string json = File.ReadAllText(dictPath);
-                dict = JsonSerializer.Deserialize<Dictionary<string, int>>(json,
-                    new JsonSerializerOptions() { WriteIndented = true });
-                return dict;
-            }
-            catch (Exception ex)
-            {
-                await LoggingProvider.Log(ex);
-                return null;
-            }
+            await DeferAsync();
+            await FollowupAsync(embed: embed.Build());
         }
+    }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        [SlashCommand("mod", "Get the Nexus link to a registered mod.")]
-        public async Task Mod(string modName)
+    /// <summary>
+    /// </summary>
+    /// <param name="message"></param>
+    [MessageCommand("Check DDS Format")]
+    public async Task CheckDdsFormat(IMessage message)
+    {
+        IEnumerable<IAttachment> attachments =
+            message.Attachments.Where(x => Path.GetExtension(x.Filename).Equals(".dds"));
+        foreach (var attachment in attachments)
         {
-            Dictionary<string, int>? dict = await LoadDict();
-            if (dict is null)
+            using HttpClient client = new();
+            var response = await client.GetAsync(attachment.Url);
+            if (response.StatusCode == HttpStatusCode.OK)
             {
-                return;
-            }
+                await using var stream = await response.Content.ReadAsStreamAsync();
+                using BinaryReader br = new(stream);
 
-            // check if tag already in dict
-            if (dict.ContainsKey(modName))
-            {
-                string nexusUrl = $"https://www.nexusmods.com/cyberpunk2077/mods/{dict[modName]}";
-                await DeferAsync(ephemeral: false);
-                await FollowupAsync(ephemeral: false, text: $"[{modName}]\n{nexusUrl}");
-            }
-            else
-            {
-                await DeferAsync(ephemeral: true);
-                await FollowupAsync(ephemeral: true, text: $"No mod with tag \"{modName}\" registered.");
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        [SlashCommand("mods", "Search for a registered mod.")]
-        public async Task Mods(string searchTerm = "")
-        {
-            Dictionary<string, string> results = new();
-            Dictionary<string, int>? dict = await LoadDict();
-            if (dict is null)
-            {
-                return;
-            }
-
-            foreach ((string key, int value) in dict)
-            {
-                if (key.Contains(searchTerm))
+                if (stream.Length < 148)
                 {
-                    string nexusUrl = $"https://www.nexusmods.com/cyberpunk2077/mods/{value}";
-                    results.Add(key, nexusUrl);
+                    await DeferAsync(true);
+                    await FollowupAsync(ephemeral: true, text: $"{attachment.Filename} - that's not a dds file...");
+                    return;
                 }
-            }
 
-            if (!results.Any())
-            {
-                await DeferAsync(ephemeral: true);
-                await FollowupAsync(ephemeral: true, text: $"No mods found for \"{searchTerm}\".");
-                return;
-            }
-
-            EmbedBuilder embed = new EmbedBuilder()
-                .WithTitle($"Mods - {searchTerm}")
-                .WithColor(Color.Green)
-                .WithCurrentTimestamp();
-
-            foreach ((string tag, string url) in results)
-            {
-                embed.AddField(tag, url);
-            }
-
-            await DeferAsync();
-            await FollowupAsync(embed: embed.Build());
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        [SlashCommand("deletemod", "Delete a registered mod.")]
-        public async Task Deletemod(string modName)
-        {
-            Dictionary<string, int>? dict = await LoadDict();
-            if (dict is null)
-            {
-                return;
-            }
-
-            // check if tag already in dict
-            if (dict.ContainsKey(modName))
-            {
-                dict.Remove(modName);
-                SaveDict(dict);
-
-                await DeferAsync(ephemeral: false);
-                await FollowupAsync(ephemeral: false, text: $"Mod with tag {modName} removed.");
-            }
-            else
-            {
-                await DeferAsync(ephemeral: true);
-                await FollowupAsync(ephemeral: true, text: $"No mod with tag {modName} registered.");
-            }
-        }
-
-
-
-        /// <summary>
-        /// 
-        /// </summary>
-        [SlashCommand("wiki", "Get wiki info")]
-        public async Task Wiki()
-        {
-            EmbedBuilder embed = new EmbedBuilder()
-                .WithTitle("The Red Modding Wiki")
-                .WithColor(Color.Red)
-                .WithAuthor(Context.Client.CurrentUser)
-                .WithUrl(Constants.Wiki.Url)
-                .WithDescription($"Welcome to the modding community wiki at {Constants.Wiki.Url}.\n" +
-                                 "Please follow the below link to gain editor access:")
-                //.WithThumbnailUrl()
-                .WithCurrentTimestamp();
-
-            embed.AddField(@"🌐 Invite link", Constants.Wiki.EditorInvite);
-
-            await DeferAsync();
-            await FollowupAsync(embed: embed.Build());
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="moddingTool"></param>
-        [SlashCommand("info", "Send info on the selected modding tool")]
-        public async Task InfoCommand(ModdingTool moddingTool)
-        {
-            Dictionary<string, Models.ModTool> toolsDict = await ResourceUtil.LoadModToolsDictAsync();
-
-            // try get 
-            if (toolsDict.TryGetValue(moddingTool.ToString(), out Models.ModTool? tool))
-            {
-                IUser user = await Context.Client.GetUserAsync(tool.Author) ?? Context.Client.CurrentUser;
-                string thumbnail = !string.IsNullOrEmpty(tool.ThumbnailUrl) ? tool.ThumbnailUrl : user.GetAvatarUrl();
-
-                EmbedBuilder embed = new EmbedBuilder()
-                    .WithTitle(tool.Title)
-                    .WithColor(tool.Color.ToDiscordColor())
-                    .WithAuthor(user)
-                    .WithUrl(tool.Url)
-                    .WithDescription(tool.Description)
-                    .WithThumbnailUrl(thumbnail)
-                    .WithCurrentTimestamp();
-                embed.AddField(@"🌐 Url", tool.Url);
-                embed.AddField(@"❓ Wiki", tool.Wiki);
-                foreach ((string title, string value) in tool.Fields)
+                if (br.ReadInt32() != 0x20534444)
                 {
-                    embed.AddField(title, value);
+                    await DeferAsync(true);
+                    await FollowupAsync(ephemeral: true, text: $"{attachment.Filename} - that's not a dds file...");
+                    return;
+                }
+
+                // If the DDS_PIXELFORMAT dwFlags is set to DDPF_FOURCC and dwFourCC is set to "DX10" an additional DDS_HEADER_DXT10 structure will be present
+                br.ReadBytes(80);
+                if (br.ReadInt32() != 0x30315844)
+                {
+                    await DeferAsync(true);
+                    await FollowupAsync(ephemeral: true,
+                        text: $"{attachment.Filename} - that's not a dx10 dds file...");
+                    return;
                 }
 
                 await DeferAsync();
+
+                br.ReadBytes(40);
+                var fmt = (DXGI_FORMAT)br.ReadInt32();
+
+                var embed = new EmbedBuilder()
+                    .WithTitle(attachment.Filename)
+                    .WithColor(Color.Green)
+                    .WithDescription($"➡ DDS format: `{fmt}`")
+                    //.WithThumbnailUrl()
+                    .WithCurrentTimestamp();
                 await FollowupAsync(embed: embed.Build());
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="message"></param>
-        [MessageCommand("Check DDS Format")]
-        public async Task CheckDdsFormat(IMessage message)
-        {
-            IEnumerable<IAttachment> attachments =
-                message.Attachments.Where(x => Path.GetExtension(x.Filename).Equals(".dds"));
-            foreach (IAttachment? attachment in attachments)
-            {
-                using HttpClient client = new();
-                HttpResponseMessage response = await client.GetAsync(attachment.Url);
-                if (response.StatusCode == HttpStatusCode.OK)
-                {
-                    await using Stream stream = await response.Content.ReadAsStreamAsync();
-                    using BinaryReader br = new(stream);
-
-                    if (stream.Length < 148)
-                    {
-                        await DeferAsync(ephemeral: true);
-                        await FollowupAsync(ephemeral: true, text: $"{attachment.Filename} - that's not a dds file...");
-                        return;
-                    }
-
-                    if (br.ReadInt32() != 0x20534444)
-                    {
-                        await DeferAsync(ephemeral: true);
-                        await FollowupAsync(ephemeral: true, text: $"{attachment.Filename} - that's not a dds file...");
-                        return;
-                    }
-
-                    // If the DDS_PIXELFORMAT dwFlags is set to DDPF_FOURCC and dwFourCC is set to "DX10" an additional DDS_HEADER_DXT10 structure will be present
-                    br.ReadBytes(80);
-                    if (br.ReadInt32() != 0x30315844)
-                    {
-                        await DeferAsync(ephemeral: true);
-                        await FollowupAsync(ephemeral: true,
-                            text: $"{attachment.Filename} - that's not a dx10 dds file...");
-                        return;
-                    }
-
-                    await DeferAsync();
-
-                    br.ReadBytes(40);
-                    DXGI_FORMAT fmt = (DXGI_FORMAT)br.ReadInt32();
-
-                    EmbedBuilder embed = new EmbedBuilder()
-                        .WithTitle(attachment.Filename)
-                        .WithColor(Color.Green)
-                        .WithDescription($"➡ DDS format: `{fmt}`")
-                        //.WithThumbnailUrl()
-                        .WithCurrentTimestamp();
-                    await FollowupAsync(embed: embed.Build());
-                }
             }
         }
     }
