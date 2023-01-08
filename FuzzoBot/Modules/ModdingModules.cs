@@ -17,60 +17,32 @@ namespace FuzzoBot.Modules;
 /// </summary>
 public class ModdingModules : InteractionModuleBase
 {
-    /// <summary>
-    /// </summary>
-    [SlashCommand("help", "Get help with some topic.")]
-    public async Task Help(string tag)
+    private static void SaveDict(Dictionary<string, int> dict)
     {
-        var dict = await ResourceUtil.LoadTagsDictAsync();
-
-        // check if tag in dict
-        if (dict.ContainsKey(tag))
-        {
-            await DeferAsync();
-            await FollowupAsync(ephemeral: false, text: dict[tag].Body);
-        }
-        else
-        {
-            await DeferAsync(true);
-            await FollowupAsync(ephemeral: true, text: $"No help tag \"{tag}\" registered.");
-        }
+        var dictPath = Path.GetFullPath(Path.Combine("Resources", "mods.json"));
+        Directory.CreateDirectory(Path.GetFullPath(Path.Combine("Resources")));
+        File.WriteAllText(dictPath,
+            JsonSerializer.Serialize(dict, new JsonSerializerOptions { WriteIndented = true }));
     }
 
-    /// <summary>
-    /// </summary>
-    [SlashCommand("searchhelp", "Get help with some topic.")]
-    public async Task SearchHelp(string searchTerm = "")
+    private static async Task<Dictionary<string, int>?> LoadDict()
     {
-        List<string> results = new();
-        var dict = await ResourceUtil.LoadTagsDictAsync();
+        var dictPath = Path.GetFullPath(Path.Combine("Resources", "mods.json"));
 
-        foreach ((var key, var _) in dict)
-            if (key.Contains(searchTerm))
-                results.Add(key);
+        if (!File.Exists(dictPath)) return new Dictionary<string, int>();
 
-        if (!results.Any())
+        try
         {
-            await DeferAsync(true);
-            await FollowupAsync(ephemeral: true, text: $"No tags found for \"{searchTerm}\".");
-            return;
+            var json = await File.ReadAllTextAsync(dictPath);
+            var dict = JsonSerializer.Deserialize<Dictionary<string, int>>(json,
+                new JsonSerializerOptions { WriteIndented = true });
+            return dict;
         }
-
-        var embed = new EmbedBuilder()
-            .WithTitle($"searchhelp - {searchTerm}")
-            .WithColor(Color.Green)
-            .WithCurrentTimestamp();
-
-        var body = "```\n";
-        foreach (var item in results) body += $"{item}\n";
-
-        body += "```";
-        if (string.IsNullOrEmpty(searchTerm)) searchTerm = "*";
-
-        embed.AddField(searchTerm, body);
-
-        await DeferAsync();
-        await FollowupAsync(embed: embed.Build());
+        catch (Exception ex)
+        {
+            await LoggingProvider.Log(ex);
+            return null;
+        }
     }
 
     /// <summary>
@@ -89,7 +61,7 @@ public class ModdingModules : InteractionModuleBase
             return;
         }
 
-        foreach ((var key, var value) in dict)
+        foreach (var (key, value) in dict)
             if (value == nexusId)
             {
                 await DeferAsync(true);
@@ -121,35 +93,7 @@ public class ModdingModules : InteractionModuleBase
         await DeferAsync();
         await FollowupAsync(ephemeral: false, text: $"Mod registered with tag \"{modName}\".");
     }
-
-    private static void SaveDict(Dictionary<string, int> dict)
-    {
-        var dictPath = Path.GetFullPath(Path.Combine("Resources", "mods.json"));
-        Directory.CreateDirectory(Path.GetFullPath(Path.Combine("Resources")));
-        File.WriteAllText(dictPath,
-            JsonSerializer.Serialize(dict, new JsonSerializerOptions { WriteIndented = true }));
-    }
-
-    private async Task<Dictionary<string, int>?> LoadDict()
-    {
-        var dictPath = Path.GetFullPath(Path.Combine("Resources", "mods.json"));
-
-        if (!File.Exists(dictPath)) return new Dictionary<string, int>();
-
-        try
-        {
-            var json = await File.ReadAllTextAsync(dictPath);
-            var dict = JsonSerializer.Deserialize<Dictionary<string, int>>(json,
-                new JsonSerializerOptions { WriteIndented = true });
-            return dict;
-        }
-        catch (Exception ex)
-        {
-            await LoggingProvider.Log(ex);
-            return null;
-        }
-    }
-
+    
     /// <summary>
     /// </summary>
     [SlashCommand("mod", "Get the Nexus link to a registered mod.")]
@@ -222,7 +166,7 @@ public class ModdingModules : InteractionModuleBase
     /// </summary>
     /// <param name="moddingTool"></param>
     [SlashCommand("info", "Send info on the selected modding tool")]
-    public async Task InfoCommand(ModdingTool moddingTool)
+    public async Task Info(ModdingTool moddingTool)
     {
         var toolsDict = await ResourceUtil.LoadModToolsDictAsync();
 

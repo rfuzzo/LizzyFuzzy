@@ -15,9 +15,6 @@ public static class ResourceUtil
 {
     private static string ModToolsFileName => "ModTools.json";
 
-    private static string TagsFileName => "Tags.json";
-    //private static string ModsFileName => "Mods.json";
-
     private static string GetUserProfile()
     {
         return Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -32,11 +29,8 @@ public static class ResourceUtil
         return LoadResourceDictAsync<string, ModTool>(ModToolsFileName);
     }
 
-    public static Task<Dictionary<string, BotTag>> LoadTagsDictAsync()
-    {
-        return LoadResourceDictAsync<string, BotTag>(TagsFileName);
-    }
-    //public static Task<Dictionary<string, ModTool>> LoadModDictAsync() => LoadResourceDictAsync(ModsFileName);
+    
+   
 
     /// <summary>
     ///     Returns Modding Tools Info
@@ -53,10 +47,10 @@ public static class ResourceUtil
         else
         {
             // download
-            HttpClient _client = new();
+            HttpClient client = new();
             var url =
                 $"https://raw.githubusercontent.com/CDPR-Modding-Documentation/Cyberpunk-Modding-Docs/main/bot/{fileName}";
-            var response = await _client.GetAsync(new Uri(url));
+            var response = await client.GetAsync(new Uri(url));
 
             try
             {
@@ -82,9 +76,5 @@ public static class ResourceUtil
         return toolsDict;
     }
 
-    internal static void Reload()
-    {
-        File.Delete(Path.Combine(GetUserProfile(), ModToolsFileName));
-        File.Delete(Path.Combine(GetUserProfile(), TagsFileName));
-    }
+    
 }
