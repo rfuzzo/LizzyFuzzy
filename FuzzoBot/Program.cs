@@ -28,6 +28,7 @@ namespace FuzzoBot
 
             // Load environment variables from .env file
             DotEnv.Load();
+            var envVars = DotEnv.Read();
 
             using ServiceProvider services = ConfigureServices( /*configuration*/);
             DiscordSocketClient client = services.GetRequiredService<DiscordSocketClient>();
@@ -53,7 +54,7 @@ namespace FuzzoBot
 
             await services.GetRequiredService<CommandHandler>().InitializeAsync();
 
-            await client.LoginAsync(TokenType.Bot, Environment.GetEnvironmentVariable("DISCORD_TOKEN"));
+            await client.LoginAsync(TokenType.Bot, envVars["DISCORD_TOKEN"]);
             await client.StartAsync();
 
             //         client.MessageUpdated += MessageUpdatedHandler.MessageUpdated;
