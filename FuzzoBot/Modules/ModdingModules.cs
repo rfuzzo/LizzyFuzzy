@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Text.Json;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Interactions;
@@ -17,41 +16,14 @@ namespace FuzzoBot.Modules;
 /// </summary>
 public class ModdingModules : InteractionModuleBase
 {
-    private static void SaveDict(Dictionary<string, int> dict)
-    {
-        var dictPath = Path.GetFullPath(Path.Combine("Resources", "mods.json"));
-        Directory.CreateDirectory(Path.GetFullPath(Path.Combine("Resources")));
-        File.WriteAllText(dictPath,
-            JsonSerializer.Serialize(dict, new JsonSerializerOptions { WriteIndented = true }));
-    }
-
-    private static async Task<Dictionary<string, int>?> LoadDict()
-    {
-        var dictPath = Path.GetFullPath(Path.Combine("Resources", "mods.json"));
-
-        if (!File.Exists(dictPath)) return new Dictionary<string, int>();
-
-        try
-        {
-            var json = await File.ReadAllTextAsync(dictPath);
-            var dict = JsonSerializer.Deserialize<Dictionary<string, int>>(json,
-                new JsonSerializerOptions { WriteIndented = true });
-            return dict;
-        }
-        catch (Exception ex)
-        {
-            await LoggingProvider.Log(ex);
-            return null;
-        }
-    }
+    
 
     /// <summary>
     /// </summary>
     [SlashCommand("registermod", "Register a mod.")]
     public async Task RegisterMod(string modName, int nexusId)
     {
-        var dict = await LoadDict();
-        if (dict is null) return;
+        var dict = await ResourceUtil.LoadModsDictAsync();
 
         // check if tag already in dict
         if (dict.ContainsKey(modName))
@@ -83,12 +55,12 @@ public class ModdingModules : InteractionModuleBase
             await DeferAsync(true);
             await FollowupAsync(ephemeral: true, text: $"No mod with id {nexusId} exists on nexus.");
 
-            await LoggingProvider.Log(ex);
+            LoggingProvider.Log(ex);
             return;
         }
 
         dict.Add(modName, nexusId);
-        SaveDict(dict);
+        ResourceUtil.SaveModsDict(dict);
 
         await DeferAsync();
         await FollowupAsync(ephemeral: false, text: $"Mod registered with tag \"{modName}\".");
@@ -99,8 +71,7 @@ public class ModdingModules : InteractionModuleBase
     [SlashCommand("mod", "Get the Nexus link to a registered mod.")]
     public async Task Mod(string modName)
     {
-        var dict = await LoadDict();
-        if (dict is null) return;
+        var dict = await ResourceUtil.LoadModsDictAsync();
 
         // check if tag already in dict
         if (dict.ContainsKey(modName))
@@ -121,14 +92,13 @@ public class ModdingModules : InteractionModuleBase
     [SlashCommand("deletemod", "Delete a registered mod.")]
     public async Task Deletemod(string modName)
     {
-        var dict = await LoadDict();
-        if (dict is null) return;
+        var dict = await ResourceUtil.LoadModsDictAsync();
 
         // check if tag already in dict
         if (dict.ContainsKey(modName))
         {
             dict.Remove(modName);
-            SaveDict(dict);
+            ResourceUtil.SaveModsDict(dict);
 
             await DeferAsync();
             await FollowupAsync(ephemeral: false, text: $"Mod with tag {modName} removed.");
@@ -186,7 +156,7 @@ public class ModdingModules : InteractionModuleBase
                 .WithCurrentTimestamp();
             embed.AddField(@"🌐 Url", tool.Url);
             embed.AddField(@"❓ Wiki", tool.Wiki);
-            foreach ((var title, var value) in tool.Fields) embed.AddField(title, value);
+            foreach (var (title, value) in tool.Fields) embed.AddField(title, value);
 
             await DeferAsync();
             await FollowupAsync(embed: embed.Build());

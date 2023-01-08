@@ -28,8 +28,8 @@ public class Program
         var commands = services.GetRequiredService<InteractionService>();
         var messageReceivedHandler = services.GetRequiredService<MessageReceivedHandler>();
 
-        client.Log += LoggingProvider.Log;
-        commands.Log += LoggingProvider.Log;
+        client.Log += LoggingProvider.LogAsync;
+        commands.Log += LoggingProvider.LogAsync;
         client.Ready += async () =>
         {
 #if DEBUG
@@ -68,12 +68,15 @@ public class Program
                     // If you or another service needs to do anything with messages
                     // (eg. checking Reactions, checking the content of edited/deleted messages),
                     // you must set the MessageCacheSize. You may adjust the number as needed.
-                    MessageCacheSize = 50
+                    MessageCacheSize = 50,
 
                     // If your platform doesn't have native WebSockets,
                     // add Discord.Net.Providers.WS4Net from NuGet,
                     // add the `using` at the top, and uncomment this line:
                     //WebSocketProvider = WS4NetProvider.Instance
+                    
+                    GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.MessageContent,
+
                 }))
             .AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>(),
                 new InteractionServiceConfig

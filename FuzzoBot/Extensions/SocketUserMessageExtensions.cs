@@ -54,9 +54,9 @@ public static class SocketUserMessageExtensions
 
         await message.ReplyAsync(embed: embed.Build());
 
-        string MarkdownToDiscord(string input)
+        string MarkdownToDiscord(string innerInput)
         {
-            var lines = input.Split(Environment.NewLine);
+            var lines = innerInput.Split(Environment.NewLine);
             var resultLines = new List<string>();
             for (var i = 0; i < lines.Length; i++)
             {

@@ -14,66 +14,69 @@ namespace FuzzoBot.Utility;
 public static class ResourceUtil
 {
     private static string ModToolsFileName => "ModTools.json";
-
-    private static string GetUserProfile()
-    {
-        return Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-    }
-
-    /// <summary>
-    ///     Returns Modding Tools Info
-    /// </summary>
-    /// <returns></returns>
-    public static Task<Dictionary<string, ModTool>> LoadModToolsDictAsync()
-    {
-        return LoadResourceDictAsync<string, ModTool>(ModToolsFileName);
-    }
-
+    private static string ModsFileName => "Mods.json";
     
-   
+    public static Task<Dictionary<string, ModTool>> LoadModToolsDictAsync() => LoadToolsDictAsync(ModToolsFileName);
+    public static Task<Dictionary<string, int>> LoadModsDictAsync() => LoadDictAsync<string, int>(ModsFileName);
+    public static void SaveModsDict(Dictionary<string, int> dict) => SaveDict(dict, ModsFileName);
+
+
+    private static void SaveDict(Dictionary<string, int> dict, string fileName)
+    {
+        var dictPath = Path.GetFullPath(Path.Combine("Resources", fileName));
+        Directory.CreateDirectory(Path.GetFullPath(Path.Combine("Resources")));
+        File.WriteAllText(dictPath,
+            JsonSerializer.Serialize(dict, new JsonSerializerOptions { WriteIndented = true }));
+    }
+
+    private static async Task<Dictionary<T1, T2>> LoadDictAsync<T1, T2>(string fileName) where T1 : class
+    {
+        var dictPath = Path.GetFullPath(Path.Combine("Resources", fileName));
+
+        if (!File.Exists(dictPath))
+        {
+            return new Dictionary<T1, T2>();
+        }
+
+        var stream = File.OpenRead(dictPath).NotNull();
+        var dict = await JsonSerializer.DeserializeAsync<Dictionary<T1, T2>>(stream, new JsonSerializerOptions { WriteIndented = true });
+
+        ArgumentNullException.ThrowIfNull(dict);
+        return dict;
+    }
 
     /// <summary>
     ///     Returns Modding Tools Info
     /// </summary>
     /// <returns></returns>
-    private static async Task<Dictionary<T1, T2>> LoadResourceDictAsync<T1, T2>(string fileName) where T1 : class
+    private static async Task<Dictionary<string, ModTool>> LoadToolsDictAsync(string fileName) 
     {
-        var extractPath = Path.Combine(GetUserProfile(), fileName);
-
+        var extractPath = Path.GetFullPath( fileName);
         if (File.Exists(extractPath))
         {
-            // TODO check version
+            return await LoadDictAsync<string, ModTool>(extractPath);
         }
-        else
+
+        // download
+        HttpClient client = new();
+        var url =
+            $"https://raw.githubusercontent.com/CDPR-Modding-Documentation/Cyberpunk-Modding-Docs/main/bot/{fileName}";
+        var response = await client.GetAsync(new Uri(url));
+
+        try
         {
-            // download
-            HttpClient client = new();
-            var url =
-                $"https://raw.githubusercontent.com/CDPR-Modding-Documentation/Cyberpunk-Modding-Docs/main/bot/{fileName}";
-            var response = await client.GetAsync(new Uri(url));
+            response.EnsureSuccessStatusCode();
 
-            try
-            {
-                response.EnsureSuccessStatusCode();
-
-                // save to file
-                await using FileStream fs = new(extractPath, FileMode.Create);
-                await response.Content.CopyToAsync(fs);
-            }
-            catch (HttpRequestException ex)
-            {
-                await LoggingProvider.Log(ex);
-            }
+            // save to file
+            await using FileStream fs = new(extractPath, FileMode.Create);
+            await response.Content.CopyToAsync(fs);
+        }
+        catch (HttpRequestException ex)
+        {
+            LoggingProvider.Log(ex);
         }
 
-        var stream = File.OpenRead(extractPath).NotNull();
-        var toolsDict =
-            await JsonSerializer.DeserializeAsync<Dictionary<T1, T2>>(stream,
-                new JsonSerializerOptions { WriteIndented = true });
-
-        //ArgumentNullException.ThrowIfNull(toolsDict);
-        if (toolsDict is null) throw new ArgumentNullException();
-        return toolsDict;
+        return await LoadDictAsync<string, ModTool>(extractPath);
     }
 
     

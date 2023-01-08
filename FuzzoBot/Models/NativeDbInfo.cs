@@ -2,6 +2,8 @@
 
 using System.Collections.Generic;
 
+namespace FuzzoBot.Models;
+
 public class Prop
 {
     public string? type { get; set; }

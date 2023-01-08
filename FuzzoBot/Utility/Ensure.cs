@@ -57,7 +57,6 @@ public static class Ensure
     /// <param name="message"></param>
     /// <param name="parameterName"></param>
     /// <returns></returns>
-    /// <exception cref="ArgumentNullOrEmptyException"></exception>
     public static string NotNullOrEmpty(
         [NotNull] this string? obj,
         string? message = default,

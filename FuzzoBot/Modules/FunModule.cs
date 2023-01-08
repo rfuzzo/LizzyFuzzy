@@ -10,6 +10,10 @@ public class FunModule : InteractionModuleBase
     /// <summary>
     /// </summary>
     /// <param name="memeTemplate"></param>
+    /// <param name="text1"></param>
+    /// <param name="text2"></param>
+    /// <param name="text3"></param>
+    /// <param name="text4"></param>
     [SlashCommand("meme", "Generate a meme")]
     public async Task GenerateMeme([Summary(description: "Template for the meme")] MemeTemplate memeTemplate,
         [Summary(

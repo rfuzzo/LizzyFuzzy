@@ -6,45 +6,42 @@ namespace FuzzoBot;
 
 public static class LoggingProvider
 {
-    public static Task Log(LogMessage message)
+    private static void Log(LogMessage message)
     {
-        switch (message.Severity)
+        Console.ForegroundColor = message.Severity switch
         {
-            case LogSeverity.Critical:
-            case LogSeverity.Error:
-                Console.ForegroundColor = ConsoleColor.Red;
-                break;
-            case LogSeverity.Warning:
-                Console.ForegroundColor = ConsoleColor.Yellow;
-                break;
-            case LogSeverity.Info:
-                Console.ForegroundColor = ConsoleColor.White;
-                break;
-            case LogSeverity.Verbose:
-            case LogSeverity.Debug:
-                Console.ForegroundColor = ConsoleColor.DarkGray;
-                break;
-        }
+            LogSeverity.Critical => ConsoleColor.Red,
+            LogSeverity.Error => ConsoleColor.Red,
+            LogSeverity.Warning => ConsoleColor.Yellow,
+            LogSeverity.Info => ConsoleColor.White,
+            LogSeverity.Verbose => ConsoleColor.DarkGray,
+            LogSeverity.Debug => ConsoleColor.DarkGray,
+            _ => Console.ForegroundColor
+        };
 
         Console.WriteLine(
             $"{DateTime.Now,-19} [{message.Severity,8}] {message.Source}: {message.Message} {message.Exception}");
         Console.ResetColor();
+    }
 
+    public static void Log(string message)
+    {
+        Log(new LogMessage(LogSeverity.Info, "", message));
+    }
+
+    public static void Log(Exception exception)
+    {
+        Log(new LogMessage(LogSeverity.Error, "", exception.Message, exception));
+    }
+
+    public static void Log(LogSeverity severity, string message)
+    {
+        Log(new LogMessage(severity, "", message));
+    }
+
+    public static Task LogAsync(LogMessage arg)
+    {
+        Log(arg);
         return Task.CompletedTask;
-    }
-
-    public static Task Log(string message)
-    {
-        return Log(new LogMessage(LogSeverity.Info, "", message));
-    }
-
-    public static Task Log(Exception exception)
-    {
-        return Log(new LogMessage(LogSeverity.Error, "", exception.Message, exception));
-    }
-
-    public static Task Log(LogSeverity severity, string message)
-    {
-        return Log(new LogMessage(severity, "", message));
     }
 }

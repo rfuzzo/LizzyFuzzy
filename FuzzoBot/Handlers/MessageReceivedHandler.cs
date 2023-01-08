@@ -9,34 +9,20 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 using FuzzoBot.Extensions;
+using FuzzoBot.Models;
 using HtmlAgilityPack;
 
 namespace FuzzoBot.Handlers;
 
 public class MessageReceivedHandler
 {
-    private static readonly Dictionary<string, double> DictSpam = new()
-    {
-        { "@everyone", 0.7 },
-        { "airdrop", 0.5 },
-        { "nitro", 0.2 },
-        { "discord", 0.2 },
-        { "free", 0.2 },
-        { ".ru", 0.4 },
-        { "dicsord", 0.4 },
-        { "discorde", 0.4 },
-        { "http", 0.1 }
-    };
-
     private readonly DiscordSocketClient _discordClient;
-    private readonly Random _rand;
 
     public MessageReceivedHandler(
         DiscordSocketClient discordClient
     )
     {
         _discordClient = discordClient;
-        _rand = new Random();
     }
 
     public async Task OnMessageReceived(SocketMessage rawMessage)
@@ -88,16 +74,23 @@ public class MessageReceivedHandler
                         .WithTitle(classInfo.name);
                     // fields
                     var sb = new StringBuilder();
-                    sb.AppendLine("**Fields**");
-                    if (classInfo?.props != null)
+
+                    if (classInfo.props != null)
+                    {
+                        sb.AppendLine("**Fields**");
+
                         sb.AppendLine(classInfo.props.Aggregate("```swift\n",
                             (current, prop) => current + $"var {prop.name} : {prop.type}\n"));
-                    sb.AppendLine("```");
+
+                        sb.AppendLine("```");
+                    }
 
                     // methods
-                    sb.AppendLine("**Methods**");
-                    sb.AppendLine("```swift");
-                    if (classInfo?.funcs != null)
+                    if (classInfo.funcs != null)
+                    {
+                        sb.AppendLine("**Methods**");
+                        sb.AppendLine("```swift");
+                        
                         foreach (var f in classInfo.funcs)
                         {
                             var fReturn = f.@return is not null
@@ -109,9 +102,11 @@ public class MessageReceivedHandler
 
                             sb.AppendLine($"{f.shortName}({fParams}){fReturn}");
                         }
+                        
+                        sb.AppendLine("```");
+                    }
 
                     var desc = sb.ToString().Clamp(4093);
-                    desc += "```";
                     embed.WithDescription(desc);
 
                     await message.ReplyAsync(embed: embed.Build(), allowedMentions: AllowedMentions.None);
