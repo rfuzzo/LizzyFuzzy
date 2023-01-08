@@ -1,0 +1,43 @@
+name: build_artifacts
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish-linux:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 6.0.x
+
+    - name: Publish with dotnet
+      run: dotnet publish -o ./publish -c Release --self-contained -r linux-x64
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: ubuntu
+        path: ./publish
+
+  publish-macos:
+
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 6.0.x
+
+    - name: Publish with dotnet
+      run: dotnet publish -o ./publish -c Release --self-contained -r osx-x64
+
+    - uses: actions/upload-artifact@v2
+      with:
+        name: macos
+        path: ./publish
