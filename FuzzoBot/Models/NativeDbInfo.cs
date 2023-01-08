@@ -1,4 +1,7 @@
 // Root myDeserializedClass = JsonConvert.DeserializeObject<Root>(myJsonResponse); 
+
+using System.Collections.Generic;
+
 public class Prop
 {
     public string? type { get; set; }

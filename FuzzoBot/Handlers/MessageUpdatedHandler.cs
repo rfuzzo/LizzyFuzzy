@@ -1,17 +1,20 @@
+using System;
+using System.Threading.Tasks;
 using Discord;
 using Discord.WebSocket;
 
-namespace FuzzoBot.Handlers;
-
-public static class MessageUpdatedHandler
+namespace FuzzoBot.Handlers
 {
-    public static async Task MessageUpdated(
-        Cacheable<IMessage, ulong> before,
-        SocketMessage after,
-        ISocketMessageChannel channel)
+    public static class MessageUpdatedHandler
     {
-        var message = await before.GetOrDownloadAsync();
+        public static async Task MessageUpdated(
+            Cacheable<IMessage, ulong> before,
+            SocketMessage after,
+            ISocketMessageChannel channel)
+        {
+            var message = await before.GetOrDownloadAsync();
 
-        Console.WriteLine($"{message} -> {after}");
+            Console.WriteLine($"{message} -> {after}");
+        }
     }
 }

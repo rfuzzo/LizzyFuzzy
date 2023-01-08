@@ -1,42 +1,44 @@
 using Discord;
 
-namespace FuzzoBot.Extensions;
-
-public static class StringExtensions
+namespace FuzzoBot.Extensions
 {
-    /// <summary>
-    ///     Clamp a string to a specific length
-    /// </summary>
-    /// <param name="input"></param>
-    /// <param name="clamp"></param>
-    /// <returns></returns>
-    public static string Clamp(this string input, int clamp) => input.Length > clamp ? input[..clamp] : input;
 
-    public static Color ToDiscordColor(this string str)
+    public static class StringExtensions
     {
-        return str switch
+        /// <summary>
+        ///     Clamp a string to a specific length
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="clamp"></param>
+        /// <returns></returns>
+        public static string Clamp(this string input, int clamp) => input.Length > clamp ? input[..clamp] : input;
+
+        public static Color ToDiscordColor(this string str)
         {
-            nameof(Color.Teal) => Color.Teal,
-            nameof(Color.DarkTeal) => Color.DarkTeal,
-            nameof(Color.Green) => Color.Green,
-            nameof(Color.DarkGreen) => Color.DarkGreen,
-            nameof(Color.Blue) => Color.Blue,
-            nameof(Color.DarkBlue) => Color.DarkBlue,
-            nameof(Color.Purple) => Color.Purple,
-            nameof(Color.DarkPurple) => Color.DarkPurple,
-            nameof(Color.Magenta) => Color.Magenta,
-            nameof(Color.DarkMagenta) => Color.DarkMagenta,
-            nameof(Color.Gold) => Color.Gold,
-            nameof(Color.LightOrange) => Color.LightOrange,
-            nameof(Color.Orange) => Color.Orange,
-            nameof(Color.DarkOrange) => Color.DarkOrange,
-            nameof(Color.Red) => Color.Red,
-            nameof(Color.DarkRed) => Color.DarkRed,
-            nameof(Color.LightGrey) => Color.LightGrey,
-            nameof(Color.LighterGrey) => Color.LighterGrey,
-            nameof(Color.DarkGrey) => Color.DarkGrey,
-            nameof(Color.DarkerGrey) => Color.DarkerGrey,
-            _ => Color.Default,
-        };
+            return str switch
+            {
+                nameof(Color.Teal) => Color.Teal,
+                nameof(Color.DarkTeal) => Color.DarkTeal,
+                nameof(Color.Green) => Color.Green,
+                nameof(Color.DarkGreen) => Color.DarkGreen,
+                nameof(Color.Blue) => Color.Blue,
+                nameof(Color.DarkBlue) => Color.DarkBlue,
+                nameof(Color.Purple) => Color.Purple,
+                nameof(Color.DarkPurple) => Color.DarkPurple,
+                nameof(Color.Magenta) => Color.Magenta,
+                nameof(Color.DarkMagenta) => Color.DarkMagenta,
+                nameof(Color.Gold) => Color.Gold,
+                nameof(Color.LightOrange) => Color.LightOrange,
+                nameof(Color.Orange) => Color.Orange,
+                nameof(Color.DarkOrange) => Color.DarkOrange,
+                nameof(Color.Red) => Color.Red,
+                nameof(Color.DarkRed) => Color.DarkRed,
+                nameof(Color.LightGrey) => Color.LightGrey,
+                nameof(Color.LighterGrey) => Color.LighterGrey,
+                nameof(Color.DarkGrey) => Color.DarkGrey,
+                nameof(Color.DarkerGrey) => Color.DarkerGrey,
+                _ => Color.Default,
+            };
+        }
     }
 }
