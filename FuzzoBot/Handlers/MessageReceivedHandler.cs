@@ -27,7 +27,7 @@ public class MessageReceivedHandler
 
     public async Task OnMessageReceived(SocketMessage rawMessage)
     {
-        // We don't want the bot to respond to itself or other bots.
+     
         // Ignore system messages, or messages from other bots
         if (rawMessage is not SocketUserMessage message) return;
         if (message.Source != MessageSource.User) return;
@@ -67,6 +67,7 @@ public class MessageReceivedHandler
             }
 
             if (classes.Count > 0)
+            {
                 foreach (var (url, classInfo) in classes)
                 {
                     embed
@@ -111,9 +112,12 @@ public class MessageReceivedHandler
 
                     await message.ReplyAsync(embed: embed.Build(), allowedMentions: AllowedMentions.None);
                 }
+            }
         }
 
-
+        // evaluate github nightly updates
+        
+        
         // evaluate other stuff
         // if (content.Contains("diffuse"))
         //     await message.ReplyAsync("Unfortunately we still haven't found the defuse textures :cry:",
