@@ -51,7 +51,7 @@ public static class ResourceUtil
     /// <returns></returns>
     private static async Task<Dictionary<string, ModTool>> LoadToolsDictAsync(string fileName) 
     {
-        var extractPath = Path.GetFullPath( fileName);
+        var extractPath = Path.GetFullPath(Path.Combine("Resources",  fileName));
         if (File.Exists(extractPath))
         {
             return await LoadDictAsync<string, ModTool>(extractPath);

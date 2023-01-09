@@ -36,7 +36,7 @@ public class ModdingModules : InteractionModuleBase
         
         // custom bot issue text
         var issueTitle = $"[BOT] {title}";
-        var issueBody = $"[Issue create with ]/n{body}";
+        var issueBody = $"[Issue create with https://github.com/rfuzzo/LizzyFuzzy]/n{body}";
         
         // create issue in Wolvenkit
         var issue = await client.Issue.Create("WolvenKit", "WolvenKit", new NewIssue(issueTitle)
