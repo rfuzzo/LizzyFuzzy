@@ -36,7 +36,7 @@ public class ModdingModules : InteractionModuleBase
         
         // custom bot issue text
         var issueTitle = $"[BOT] {title}";
-        var issueBody = $"[Issue create with https://github.com/rfuzzo/LizzyFuzzy]/n{body}";
+        var issueBody = $"[Issue create with https://github.com/rfuzzo/LizzyFuzzy] \n {body}";
         
         // create issue in Wolvenkit
         var issue = await client.Issue.Create("WolvenKit", "WolvenKit", new NewIssue(issueTitle)
@@ -45,7 +45,7 @@ public class ModdingModules : InteractionModuleBase
         });
         
         // post message to discord
-        await DeferAsync(true);
+        await DeferAsync(false);
         await FollowupAsync(ephemeral: false, text: $"Issue created: {issue.Url}");
     }
 
