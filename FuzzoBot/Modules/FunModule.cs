@@ -14,7 +14,7 @@ public class FunModule : InteractionModuleBase
     /// <param name="text2"></param>
     /// <param name="text3"></param>
     /// <param name="text4"></param>
-    [SlashCommand("meme", "Generate a meme")]
+    [SlashCommand("meme", "Generate a meme from a memegen template")]
     public async Task GenerateMeme([Summary(description: "Template for the meme")] MemeTemplate memeTemplate,
         [Summary(
             description: "Optional text to fit in the first text location on the meme template (if it exists)")]

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -7,8 +8,10 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Interactions;
+using dotenv.net;
 using FuzzoBot.Extensions;
 using FuzzoBot.Utility;
+using Octokit;
 
 namespace FuzzoBot.Modules;
 
@@ -16,11 +19,39 @@ namespace FuzzoBot.Modules;
 /// </summary>
 public class ModdingModules : InteractionModuleBase
 {
-    
+    /// <summary>
+    /// </summary>
+    [SlashCommand("gh-issue", "Create a new GitHub Issue in WolvenKit")]
+    [RequireRole(803628105087713290)]
+    public async Task GitHubIssueCreate(string title, string body)
+    {
+        if (string.IsNullOrEmpty(title)) return;
+        if (string.IsNullOrEmpty(body)) return;
+        
+        // authenticate gh client
+        var client = new GitHubClient(new ProductHeaderValue("lizzy-fuzzy"));
+        DotEnv.Load();
+        var tokenAuth = new Credentials(DotEnv.Read()["GITHUB_TOKEN"]);
+        client.Credentials = tokenAuth;
+        
+        // custom bot issue text
+        var issueTitle = $"[BOT] {title}";
+        var issueBody = $"[Issue create with ]/n{body}";
+        
+        // create issue in Wolvenkit
+        var issue = await client.Issue.Create("WolvenKit", "WolvenKit", new NewIssue(issueTitle)
+        {
+            Body = issueBody,
+        });
+        
+        // post message to discord
+        await DeferAsync(true);
+        await FollowupAsync(ephemeral: false, text: $"Issue created: {issue.Url}");
+    }
 
     /// <summary>
     /// </summary>
-    [SlashCommand("registermod", "Register a mod.")]
+    [SlashCommand("registermod", "Register a nexus mod with the bot")]
     public async Task RegisterMod(string modName, int nexusId)
     {
         var dict = await ResourceUtil.LoadModsDictAsync();
@@ -68,7 +99,7 @@ public class ModdingModules : InteractionModuleBase
     
     /// <summary>
     /// </summary>
-    [SlashCommand("mod", "Get the Nexus link to a registered mod.")]
+    [SlashCommand("mod", "Get the Nexus link to a registered mod")]
     public async Task Mod(string modName)
     {
         var dict = await ResourceUtil.LoadModsDictAsync();
@@ -90,6 +121,7 @@ public class ModdingModules : InteractionModuleBase
     /// <summary>
     /// </summary>
     [SlashCommand("deletemod", "Delete a registered mod.")]
+    [RequireUserPermission(GuildPermission.ManageMessages)]
     public async Task Deletemod(string modName)
     {
         var dict = await ResourceUtil.LoadModsDictAsync();
@@ -113,7 +145,7 @@ public class ModdingModules : InteractionModuleBase
 
     /// <summary>
     /// </summary>
-    [SlashCommand("wiki", "Get wiki info")]
+    [SlashCommand("wiki", "Get editing info for the modding community wiki")]
     public async Task Wiki()
     {
         var embed = new EmbedBuilder()

@@ -103,21 +103,5 @@ public class CommonModule : InteractionModuleBase
         await RespondAsync("pong");
     }
 
-    /// <summary>
-    /// </summary>
-    [ComponentInteraction("ping-*")]
-    public async Task ComponentInteractionPing(string userLabel)
-    {
-        switch (userLabel)
-        {
-            case "owner":
-                await DeferAsync();
-                await FollowupAsync($"Pinging {Constants.rfuzzo} for review. {Constants.Emotes.smile}");
-                break;
-            default:
-                await DeferAsync();
-                await FollowupAsync("Unable to ping.");
-                break;
-        }
-    }
+    
 }
